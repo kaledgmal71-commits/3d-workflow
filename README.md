@@ -1,40 +1,39 @@
-# مجسّم رحلة المشروع — blueprint-3d-workflow
+# 3d-workflow — مجسّم رحلة المشروع
 
 تطبيق ويب تفاعلي (PWA يعمل دون اتصال) يعرض **خط الإنتاج القياسي للمشاريع** مجسمًا ثلاثي الأبعاد:
-50 غرفة (25 أساسية + 8 ملحقات)، لكل غرفة **سير داخلي** حقيقي (349 مكوّنًا) تتحرك فيه طلبات العمل، مع جولة مرشدة وتجوّل حر،
-واسم دولي ومصدر ودرجة اعتماد لكل غرفة (`STANDARDS_MAP.md`)، وتصدير «وثيقة العمل» بصيغة Markdown.
-و**مساعد ذكي** (Supabase + Claude) يخصّص الخط لمشروع المستخدم.
+50 غرفة (25 أساسية + 8 ملحقات)، لكل غرفة سير داخلي تتحرك فيه طلبات العمل، مع جولة مرشدة وتجوّل حر،
+واسم دولي ومصدر ودرجة اعتماد لكل غرفة (`STANDARDS_MAP.md`)، وتصدير «وثيقة العمل». ومساعد ذكي (Supabase + Claude) يخصص الخط لمشروعك.
 
-## التشغيل
-المجلد كله ملفات ثابتة: ارفعه كما هو إلى Vercel أو GitHub Pages أو أي استضافة HTTPS، وافتحه مرة متصلًا ليُخزَّن للعمل دون إنترنت.
-محليًا: `python -m http.server 8080` ثم افتح `http://localhost:8080`.
+## الرابط الحي
+`https://kaledgmal71-commits.github.io/3d-workflow/` بعد تفعيل Pages (Settings ← Pages ← Deploy from a branch ← `main` ← `/ (root)`).
+
+## ترتيب الملفات
+```
+index.html  sw.js  manifest.json  config.js  icon.svg  icon-192.png  icon-512.png   ← التطبيق (تبقى في الجذر)
+STANDARDS_MAP.md  README.md  .gitignore
+docs/ARCHITECTURE.md
+narration/lines.json                       ← نصوص السرد (تُولّد منها حزمة الصوت)
+tools/render_narration.py  tools/README_VOICE.md
+supabase/migrations/0001_init_blueprint_schema.sql  supabase/migrations/0002_seed_rooms_registry.sql
+supabase/functions/plan-project/index.ts
+```
+ملاحظة: إن رفعت الملفات مسطّحة فانقلها إلى مجلداتها بتغيير المسار من صفحة تحرير الملف (اكتب `المجلد/` قبل اسمه). ملفات التطبيق لا تُنقل.
+
+## المساعد الذكي
+مشروع Supabase: `gjxunzwkrnzinimlshyk` (eu-central-1). مضبوط فيه: الجداول بسياسات أمان الصفوف، ودالة `plan-project` التي تتحقق من الدخول، وتحدّ عشر عمليات في الساعة،
+وتستدعي Claude ثم **ترفض أي خطة معطوبة أو خبيثة** وتنقّي النصوص.
+
+**ما عليك مرة واحدة:**
+1. أضف السر `ANTHROPIC_API_KEY` في Supabase ← Edge Functions ← Secrets (قبله ترد الدالة «الذكاء غير مُهيّأ»).
+2. Supabase ← Authentication ← URL Configuration: ضع `https://kaledgmal71-commits.github.io/3d-workflow/` في Site URL وRedirect URLs، وإلا أعاد رابط البريد إلى عنوان آخر.
+
+## أمان
+`config.js` يحمل المفتاح **القابل للنشر** (publishable) فقط، لا تضع فيه أي مفتاح سري. كل ما يقترحه الذكاء خارج السجل المعتمد يُوسم «اقتراح غير موثّق مرجعيًا».
 
 ## الصوت
-انظر `tools/README_VOICE.md` (أسرع طريق: `python tools/render_narration.py --engine edge --asr none`) وزر «تشخيص الصوت» داخل التطبيق.
-
-## المساعد الذكي: ما أُنجز وما بقي عليك
-مشروع Supabase: `gjxunzwkrnzinimlshyk` (منطقة eu-central-1، الطبقة المجانية). مضبوط فيه:
-- **الجداول** (`supabase/migrations`): `rooms_registry` (السجل المعتمد) و`projects` و`workflow_versions` و`generations`، وكلها بسياسات أمان صفوف: كل مستخدم يرى مشاريعه فقط.
-- **الدالة** `plan-project` (`supabase/functions/plan-project/index.ts`): تتحقق من الدخول، وتحدّ التوليد بعشر مرات في الساعة للمستخدم، وتستدعي Claude بأداة إخراج مهيكل، ثم **ترفض أي خطة** تخالف الصيغة (معرّف مكرر، دورة أمامية، قرار نجاح/فشل بلا مخرجين، عقدة معزولة…) وتُنقّي النصوص، وتحفظ الإصدار.
-- **التطبيق** (`config.js` + لوحة «المساعد الذكي»): دخول بالبريد (رابط سحري)، توليد الخطة وتطبيقها على المجسم، واستيراد خطة JSON يدويًا، وإرسال وثيقة العمل إلى Zapier.
-
-**ما لا أستطيع ضبطه عنك — افعله مرة واحدة:**
-1. **مفتاح Claude:** Supabase ← Edge Functions ← Secrets ← أضف `ANTHROPIC_API_KEY`. قبل ذلك ترد الدالة «الذكاء غير مُهيّأ» ولا تتعطل. (اختياري: `ANTHROPIC_MODEL`.)
-2. **روابط الدخول:** Supabase ← Authentication ← URL Configuration: ضع عنوان موقعك المنشور في Site URL وRedirect URLs، وإلا أعاد رابط البريد إلى عنوان آخر.
-3. **المستودع:** أنشئ مستودعًا خاصًا على GitHub ثم:
-```
-git init && git add . && git commit -m "init"
-git branch -M main
-git remote add origin https://github.com/<حسابك>/blueprint-3d-workflow.git
-git push -u origin main
-```
-
-## الأمان
-- `config.js` يحمل المفتاح **القابل للنشر** فقط (publishable)؛ لا تضع فيه أي مفتاح سري.
-- كل ما يقترحه الذكاء خارج السجل المعتمد يظهر في التطبيق بوسم «اقتراح غير موثّق مرجعيًا» ولا يُنسب إلى معيار.
-- السجل المعتمد للقراءة فقط للمستخدمين؛ يُعدَّل بالترحيلات.
+انظر `tools/README_VOICE.md`. أسرع طريق: `python tools/render_narration.py --engine edge --asr none` ثم ضع مجلد `audio` بجانب `index.html`. وفي التطبيق زر «تشخيص الصوت».
 
 ## حدود صريحة
-- لم أُشغّل المساعد الذكي نهاية-إلى-نهاية (يحتاج مفتاح Claude وحسابًا)؛ اختُبر منطق التحقق وتطبيق الخطط آليًا بخطط سليمة وخبيثة.
-- Zapier: وصلت حصة مهام حسابك إلى حدها حتى 17 نوفمبر 2026، فلن يعمل إرسال الوثيقة إلى Zap قبل ذلك أو قبل ترقية الخطة.
-- لم أختبر التطبيق في متصفح حقيقي؛ اختُبرت الهندسة والمحاكاة والجولة بسكربتات ولقطات مرسومة خارج المتصفح.
+- لم يُجرّب المساعد الذكي مع Claude نهاية-إلى-نهاية؛ اختُبر منطق التحقق وتطبيق الخطط آليًا بخطط سليمة وخبيثة.
+- المحاكاة توضيحية: نسب الفشل افتراضات معلنة وليست إحصاءات.
+- الترتيب في خط واحد تركيب لتوضيح التسلسل المعتاد؛ المعيار ISO/IEC/IEEE 12207 لا يفرض نموذج دورة حياة بعينه.
