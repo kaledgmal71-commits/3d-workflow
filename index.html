@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>مخطط رحلة المشروع</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#0a1428">
+<style>
+:root{--bg:#0a1428;--pn:#0f1c38;--tx:#e6eefc;--mu:#8fa3c7;--bd:#22345c;--ac:#5ab0ff}
+@media(prefers-color-scheme:light){:root{--bg:#eef3fb;--pn:#fff;--tx:#10203f;--mu:#566a90;--bd:#cbd6ea;--ac:#1d6fd6}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.75 "Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--bd)}
+h1{font-size:16px;margin:0;flex:1;min-width:150px}
+button{font:inherit;color:var(--tx);background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:3px 12px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+#cat{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 12px;border-bottom:1px solid var(--bd);white-space:nowrap}
+#cat span{color:var(--mu)}
+main{flex:1;display:flex;min-height:0}
+#w{flex:1;min-width:0;min-height:0;position:relative}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+#bk{position:absolute;top:10px;inset-inline-start:10px;z-index:2}
+aside{width:340px;overflow:auto;background:var(--pn);border-inline-start:1px solid var(--bd);padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+@media(max-width:760px){main{flex-direction:column}aside{width:auto;max-height:42%;border-inline-start:0;border-top:1px solid var(--bd)}}
+h2{font-size:17px;margin:4px 0}h2 small{color:var(--mu);font-weight:400;font-size:12px}
+h3{font-size:13px;margin:14px 0 4px;color:var(--mu)}
+p{margin:4px 0}.mu{color:var(--mu)}
+.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-size:12px;color:var(--mu)}
+.kp b{display:block;font-size:20px;color:var(--tx)}
+.br{display:flex;align-items:center;gap:8px;font-size:12px}.br span{width:44px}
+.br i{display:block;height:8px;border-radius:4px}.br em{font-style:normal;color:var(--mu)}
+.st{display:flex;gap:8px;padding:5px 9px;border:1px solid var(--bd);border-radius:8px;margin:3px 0}
+.st b{color:var(--ac)}
+.ch{display:inline-block;margin:2px;padding:0 9px;border:1px solid var(--bd);border-radius:99px;cursor:pointer;font-size:13px}
+.bg{display:inline-block;padding:0 9px;border-radius:99px;color:#06101f;font-size:12px;font-weight:600}
+.seg{display:flex;gap:4px}#sub{position:absolute;bottom:14px;left:0;right:0;text-align:center;pointer-events:none;z-index:2;font-size:clamp(14px,2.1vw,23px);font-weight:700;line-height:1.5;white-space:nowrap;color:var(--tx);-webkit-text-stroke:4px var(--bg);paint-order:stroke fill;text-shadow:0 1px 6px var(--bg)}#tc{position:absolute;top:10px;inset-inline-end:10px;display:flex;gap:6px;z-index:2}</style>
+</head>
+<body>
+<header>
+<h1>مجسّم رحلة المشروع · خط الإنتاج القياسي</h1>
+<div class="seg"><button data-m="orbit" class="on">مجسّم</button><button data-m="top">مسقط علوي</button><button data-m="walk">تجوّل حر</button><button data-m="tour">جولة مرشدة</button></div><button id="pl" class="on">المحاكاة تعمل</button>
+<button id="rs">إعادة الضبط</button>
+<button id="ai">المساعد الذكي</button><button id="hp">المساعدة</button><button id="vd">تشخيص الصوت</button><button id="ins" hidden>تثبيت التطبيق</button>
+</header>
+<div id="cat"></div>
+<main>
+<div id="w"><canvas id="cv"></canvas><button id="bk" hidden>← إغلاق المخطط التفصيلي</button><div id="sub" hidden></div><div id="tc" hidden><button id="tr0">⏮</button><button id="tr1">⏸</button><button id="tr2">⏭</button><button id="tr3">الصوت: يعمل</button></div></div>
+<aside id="side"></aside>
+</main>
+<script src="config.js" onerror="void 0"></script>
+<script>
+const $=s=>document.querySelector(s);
+const C={stage:'#4aa3ff',router:'#ffb020',loop:'#c77dff',gate:'#ff5d73',test:'#36d399',metric:'#22d3ee',store:'#94a3b8'};
+const TN={stage:'مرحلة',router:'روتر',loop:'حلقة',gate:'بوابة',test:'اختبار',metric:'قياس',store:'مخزن'};
+const TT={stage:'يُتحقق من اكتمال المخرجات مقابل عقد المدخلات',router:'تُختبر كل الفروع مع فرع افتراضي',loop:'سقف للتكرار ومعيار توقف صريح',gate:'قيم حدّية وحالات قبول ورفض',test:'قابلية إعادة التشغيل وثبات النتيجة',metric:'خط أساس ومعايرة دورية',store:'سلامة البيانات وقابلية الاستعادة'};
+const GL={stage:'▭',router:'⇄',gate:'▣',loop:'↺',store:'▤',test:'✓',metric:'◔'};
+const HN=['التهيئة والتصميم','البناء والتكامل','الجودة والاختبار (خط CI)','التسليم والتشغيل','الملحقات'];
+const B=[
+['in','استقبال الطلب','Intake','stage',0,0,0,'تسجيل الطلب أو الفكرة بصاحبه وهدفه في مكان واحد قابل للتتبع','تسجيل الطلب وصاحبه|توضيح الهدف والمنفعة المتوقعة|فتح بطاقة متابعة برقم ومسؤول','طلبات تضيع بين القنوات فلا يُعرف حالها',0,''],
+['r1','فرز الطلب','Triage','router',0,1,0,'يقرر مسار الطلب بحسب حجمه وجدّته وخطورته، فلا يُعامل التعديل الصغير كمشروع جديد','تصنيف الطلب بالحجم والجدّة والخطورة|اختيار نموذج التعامل|تعيين المسار والمسؤول','تصنيف خاطئ: مشروع كبير يمرّ كتعديل صغير',0,'نماذج التغيير: قياسي وعادي وطارئ (ITIL 4)'],
+['rv','مراجعة المخاطر','Risk Review','stage',0,1,1,'فحص إضافي للطلبات الحساسة أمنيًا أو قانونيًا قبل بدء العمل','تقييم المخاطر الأمنية والقانونية|تحديد ضوابط التخفيف|موافقة الجهة المسؤولة','موافقة شكلية لا تفحص المخاطر فعلًا',0,''],
+['rq','بلورة المتطلبات','Requirements','stage',0,2,0,'تحويل الفكرة إلى متطلبات مكتوبة قابلة للقياس والقبول','استخراج احتياجات أصحاب المصلحة|كتابة قصص المستخدم ومعايير القبول|تحديد المتطلبات غير الوظيفية والقيود|مراجعتها مع العميل','متطلبات غامضة لا يمكن اختبارها',[3,'اعتمدها العميل؟',1],'المتطلبات غير الوظيفية: نموذج الجودة ISO/IEC 25010'],
+['rs','البحث والاستقصاء','Research','stage',0,3,0,'دراسة الحلول القائمة قبل البناء لتجنّب إعادة اختراع ما حُلّ','حصر حلول مشابهة قديمة ومتوسطة وحديثة|تفكيك أبرز الحلول بالهندسة العكسية لبنيتها وسلوكها|استشراف اتجاهات السوق والتقنية|توثيق الفجوات والفرص','الاكتفاء بحلول مشهورة دون فحص ملاءمتها',0,''],
+['an','التحليل والمقارنة','Analysis','stage',0,4,0,'مقارنة الخيارات بمعايير معلنة وتوليف الحل الأنسب','مقارنة الخيارات بمعايير موزونة|تحليل المفاضلات (Trade-offs)|توليف الحل المقترح|تسجيل القرار وأسبابه','قرار بلا توثيق يُعاد الجدل فيه لاحقًا',0,'سجل قرارات المعمارية (ADR)'],
+['ds','التصميم والمعمارية','Architecture','stage',0,5,0,'رسم بنية النظام ومكوّناته وواجهاته قبل كتابة أي شيفرة','تحديد المكوّنات وحدودها|تصميم الواجهات والبيانات|فحص التصميم مقابل المتطلبات غير الوظيفية|إصدار وثيقة العمل والمعمارية','تصميم لا يحقق متطلبًا غير وظيفي فيُكتشف متأخرًا',[2,'يحقق المتطلبات؟',0],''],
+['pl','التخطيط','Planning','stage',0,6,0,'ترتيب العمل في خطوات وجدول ومخاطر وخط إنتاج؛ ومنه ينفرع مساران متوازيان: الخلفية والواجهة','تفكيك العمل إلى هيكل مهام (WBS)|تقدير الجهد وبناء الجدول|سجل المخاطر وخطط معالجتها|تحديد المعالم وخط الإنتاج','تقدير متفائل يتجاوزه الواقع',0,''],
+['be','تطوير الخلفية','Backend','stage',1,6,0,'منطق الخادم والبيانات والواجهات البرمجية','نمذجة البيانات|كتابة منطق الأعمال|مراجعة الشيفرة (Code Review)|الدمج بعد اجتياز المراجعة','دمج بلا مراجعة يُدخل أخطاء للفرع الرئيسي',[2,'اجتازت المراجعة؟',1],''],
+['fe','تطوير الواجهة','Frontend','stage',1,6,1,'واجهة المستخدم وتجربتها وحالاتها','تصميم الواجهة وحالاتها (تحميل وخطأ وفراغ)|بناء المكوّنات|مراجعة الشيفرة وإمكانية الوصول|الدمج','واجهة تعمل في الحالة السعيدة فقط',[2,'اجتازت المراجعة؟',1],''],
+['ig','التكامل والبناء','Integration & Build','stage',1,5,0,'يلتقي هنا المساران في بناء واحد، ولا يمضي العمل حتى يصل الاثنان؛ ثم يُطلق خط الاختبارات تلقائيًا','سحب الفروع المدمجة|بناء الحزمة القابلة للتشغيل|إطلاق خط الاختبارات تلقائيًا','فروع طويلة العمر تصطدم عند الدمج',0,'التكامل المستمر (CI)'],
+['tu','اختبار الوحدات','Unit Tests','test',2,5,0,'فحص أصغر الأجزاء منفردة؛ أسرع الاختبارات وأكثرها عددًا','تشغيل الحالات معزولة|قياس التغطية|إيقاف الخط عند أول فشل','اختبارات تتحقق من التنفيذ لا من السلوك',0,'قاعدة هرم الاختبارات (Test Pyramid)'],
+['ti','اختبار التكامل','Integration Tests','test',2,4,0,'فحص تعاون الأجزاء: قاعدة البيانات والواجهات والخدمات','تهيئة بيئة اختبار|تشغيل سيناريوهات التفاعل|مقارنة العقود بين المكوّنات','بيئة اختبار لا تشبه الإنتاج',0,''],
+['te','اختبار شامل','End-to-End Tests','test',2,3,0,'تجربة المسارات الحرجة كما يسلكها المستخدم؛ أبطأها وأقلها عددًا','تحديد المسارات الحرجة|تشغيلها على الواجهة الفعلية|توثيق الفشل بصور وسجلات','اختبارات هشّة تفشل دون عيب حقيقي',0,''],
+['ts','فحص الأمان','Security Scan','test',2,2,0,'كشف الثغرات قبل الإصدار آليًا','فحص التبعيات المعروفة الثغرات|تحليل ساكن للشيفرة (SAST)|فحص الأسرار المسرّبة في المستودع','ثغرة تظهر في الإنتاج لأن الفحص لم يغطها',0,'الثغرات الشائعة: قائمة OWASP Top 10'],
+['pf','اختبار الأداء','Performance Test','test',2,1,0,'التحقق من الاستجابة تحت الحمل المتوقع','تحديد حمل الذروة المتوقع|تشغيل اختبار الحمل|مقارنة النتائج بالأهداف','قياس على بيئة أضعف من الإنتاج',0,''],
+['vf','بوابة الجودة','Quality Gate','gate',2,0,0,'لا يخرج الإصدار إلا إذا استوفى عتبات متفقًا عليها سلفًا','تجميع نتائج الاختبارات والتغطية|مقارنتها بالعتبات المتفق عليها|قرار القبول أو الرفض','عتبات متساهلة تُمرّر عيوبًا',0,'بوابات الجودة في أنظمة CI'],
+['db','معالجة العيوب والتصحيح','Fix Loop','loop',2,3,1,'أي فشل في الخط يصل إلى هنا: تشخيص السبب وإصلاحه ثم إعادة الخط من أوله','إعادة إنتاج الفشل|عزل السبب الجذري|إصلاح مع اختبار انحدار|إعادة التشغيل محليًا','إصلاح العَرَض دون السبب فيتكرر الفشل',[3,'نجح الاختبار؟',0],''],
+['ua','قبول العميل','Acceptance','gate',3,0,0,'عرض النسخة على العميل والتحقق من تحقيقها لمعايير القبول المكتوبة','عرض النسخة في بيئة تجريبية|تنفيذ سيناريوهات القبول|قرار القبول أو الرفض','معايير قبول لم تُكتب فيصير الرفض ذوقيًا',0,'اختبار قبول المستخدم (UAT)'],
+['dp','النشر','Deployment','stage',3,1,0,'نقل الإصدار إلى بيئة التشغيل بأقل مخاطرة وقابلية للتراجع','تجهيز البيئة والإعدادات|نشر تدريجي لنسبة صغيرة من المستخدمين|فحص الصحة بعد النشر|تراجع (Rollback) عند الإخفاق','نشر دفعة واحدة بلا خطة تراجع',[2,'الصحة سليمة؟',1],'النشر التدريجي: Canary وBlue-Green'],
+['mo','المراقبة','Monitoring','metric',3,2,0,'مراقبة الإصدار في الإنتاج لاكتشاف المشكلات قبل المستخدمين','جمع السجلات والمقاييس|ضبط تنبيهات على أهداف الخدمة (SLO)|تحليل الاتجاهات','تنبيهات كثيرة تُهمَل أو قليلة تفوّت العطل',0,''],
+['mt','الصيانة','Maintenance','stage',3,2,1,'معالجة البلاغات والحوادث وإصدار التحديثات','فرز البلاغات حسب الأثر|إصلاح أو تحسين|إصدار تحديث عبر الخط نفسه|نسخ احتياطي واختبار الاستعادة','إصلاحات عاجلة تتجاوز الخط فتعيد الأعطال',0,''],
+['qa','قياس الجودة والمخرجات','Metrics','metric',3,3,0,'مؤشرات تبيّن صحة عملية التسليم وجودة المنتج','تجميع بيانات الخط والإنتاج|حساب مؤشرات التسليم وجودة الشيفرة|نشر لوحة المؤشرات','مؤشرات تُقاس لأنها سهلة لا لأنها مهمة',0,'مؤشرات DORA الأربعة: تكرار النشر، زمن التسليم، معدل فشل التغيير، زمن الاستعادة'],
+['rt','المراجعة واستخلاص الدروس','Retrospective','stage',3,4,0,'مراجعة ما جرى لتحسين العمل القادم وتحديث القوالب','مراجعة ما نجح وما أخفق|استخراج إجراءات تحسين محددة|تحديث قوالب العمل والتوثيق','دروس تُكتب ولا تُنفَّذ',0,'المراجعة الدورية (Retrospective) في أطر Agile'],
+['dz','إنهاء الخدمة','Disposal','stage',3,3,1,'إخراج المنتج من الخدمة بأمان: إشعار المستخدمين وترحيل البيانات أو أرشفتها وإتلاف ما يجب إتلافه','إشعار المستخدمين وتحديد البديل|ترحيل البيانات أو أرشفتها|إيقاف الخدمة وسحب الصلاحيات|إتلاف البيانات الحساسة وفق السياسة','بيانات تُترك بلا أرشفة أو إتلاف فتتحول إلى خطر',0,'']
+];
+const E0=[['in','r1'],['r1','rq','منتج أو ميزة جديدة'],['r1','pl','تعديل صغير معروف'],['r1','rv','عالي الخطورة'],['rv','rq'],['rq','rs'],['rs','an'],['an','ds'],['ds','pl'],['pl','be'],['pl','fe'],['be','ig'],['fe','ig'],['ig','tu'],['tu','ti'],['ti','te'],['te','ts'],['ts','pf'],['pf','vf'],['vf','ua','مستوفٍ'],['vf','qa','نتائج الاختبارات','s'],['vf','db','غير مستوفٍ','b'],['tu','db','فشل','b'],['ti','db','فشل','b'],['te','db','فشل','b'],['ts','db','ثغرة','b'],['pf','db','أداء دون الهدف','b'],['db','ig','بعد الإصلاح','b'],['ua','dp','مقبول'],['ua','pl','ملاحظات: تعديل الخطة','b'],['dp','mo'],['dp','db','تراجع عن النشر','b'],['mo','qa','','',.7],['mo','mt','بلاغ أو حادثة','',.3],['qa','rt'],['mt','ig','إصلاح عاجل','b',.6],['mt','in','تغيير أكبر: طلب جديد','b',.4],['rt','in','دروس وتحسينات','s'],['mt','dz','انتهاء عمر المنتج','',.1],['dz','rt']];
+const PK=[
+{id:'web',n:'ويب / SaaS',c:'#4aa3ff',cut:[['be','fe']],N:[['au','الهوية والصلاحيات','Auth','gate','تحديد من يدخل وماذا يملك','تسجيل الدخول|الأدوار والصلاحيات|الجلسات','تجاوز الصلاحيات'],['ap','واجهة البرمجة','API','stage','عقد التخاطب بين الواجهة والخادم','تعريف المسارات|التحقق من المدخلات|التوثيق','كسر التوافق']],E:[['be','ap'],['ap','au'],['au','fe']]},
+{id:'mob',n:'تطبيق جوال',c:'#36d399',cut:[['fe','dp']],N:[['sy','المزامنة دون اتصال','Offline Sync','store','حفظ محلي ثم مزامنة عند عودة الاتصال','طابور محلي|حل التعارض|إعادة المحاولة','تعارض النسخ'],['sr','مراجعة المتاجر','Store Review','gate','استيفاء اشتراطات المتاجر قبل الإصدار','فحص السياسات|بناء الإصدار|التقديم','رفض المراجعة']],E:[['fe','sy'],['sy','sr'],['sr','dp']]},
+{id:'rag',n:'بحث ومكتبة رقمية',c:'#ffb020',cut:[['aq','pt'],['ex','sm']],N:[['oc','استخراج النص OCR','OCR','stage','تحويل صور الصفحات إلى نص مع موضعه','تهيئة الصورة|التعرف|ربط النص بالموضع','أخطاء التعرف'],['ix','الفهرسة','Indexing','store','فهرس لفظي وصرفي ودلالي','تقطيع|تضمين|بناء الفهرس','فهرس قديم'],['rr','الاسترجاع وإعادة الترتيب','Retrieval','router','اختيار المقاطع الأوفى صلة بالسؤال','بحث هجين|إعادة الترتيب|حكم الكفاية','مقطع غير ذي صلة'],['ct','التوثيق والاستشهاد','Citation','gate','لا تخرج إجابة بلا مصدر قابل للتحقق','ربط الادعاء بالمقطع|تحقق الإحالة|رفض غير الموثق','استشهاد وهمي']],E:[['aq','oc'],['oc','ix'],['ix','pt'],['ex','rr'],['rr','ct','نتائج كافية'],['rr','ex','ناقصة: أعد الاسترجاع','b'],['ct','sm']]},
+{id:'agt',n:'وكيل ذكي',c:'#c77dff',cut:[['pl','ex']],N:[['tr','موجّه الأدوات','Tool Router','router','يختار الأداة أو الاستدلال الداخلي','قراءة الحاجة|مطابقة الأداة|فحص الصلاحية','أداة خاطئة'],['sb','بيئة معزولة','Sandbox','stage','تشغيل الأدوات في حيّز لا يمسّ النظام','عزل|حدود الموارد|سجل تدقيق','هروب من العزل'],['ap2','بوابة الموافقة','Approval','gate','موافقة بشرية قبل الإجراءات الحساسة','عرض الإجراء|قرار الإنسان|تسجيل القرار','موافقة آلية بلا نظر'],['lp','حلقة الوكيل','Agent Loop','loop','ملاحظة ثم تخطيط ثم فعل حتى الإنجاز','ملاحظة|إعادة تخطيط|فعل','حلقة لا تنتهي']],E:[['pl','tr'],['tr','sb','أداة خارجية'],['tr','ex','استدلال داخلي'],['sb','ap2'],['ap2','ex','موافق'],['ap2','pl','مرفوض','b'],['ex','lp'],['lp','pl','ملاحظة ثم إعادة تخطيط','b']]},
+{id:'llm',n:'نموذج لغوي',c:'#ff5d73',cut:[['bd','pl']],N:[['tk','التوكنة','Tokenization','stage','تحويل النص إلى وحدات عددية','بناء المفردات|ترميز النص|حجز الرموز الخاصة','تجزئة سيئة للغة'],['tn','التدريب','Training','loop','تحسين الأوزان دورة بعد دورة','تمرير أمامي|حساب الخسارة|تحديث الأوزان','فرط التخصيص'],['ev','تقييم النموذج','Model Eval','gate','قياس النموذج على بيانات لم يرها','مجموعة ذهبية|مقاييس|مقارنة بالسابق','تسرب بيانات الاختبار']],E:[['bd','tk'],['tk','tn'],['tn','ev'],['ev','pl','مقبول'],['ev','tn','ضبط وإعادة تدريب','b']]},
+{id:'shop',n:'متجر إلكتروني',c:'#22d3ee',N:[['py','الدفع','Payments','gate','إتمام الدفع بأمان وتأكيده','إنشاء الطلب|تفويض الدفع|تأكيد وإيصال','دفع مزدوج'],['iv','المخزون','Inventory','store','تتبع الكميات وحجزها','حجز الكمية|خصم عند التأكيد|تنبيه النفاد','تضارب الحجز'],['sh','الشحن','Fulfilment','stage','تجهيز الطلب وتسليمه وتتبعه','تجهيز|تسليم للناقل|تتبع الحالة','طلب ضائع']],E:[['be','py'],['py','iv'],['iv','sh'],['sh','fe']]}
+];
+const PX={
+web:{cut:[['be','ig']],E:[['be','au'],['au','ap'],['ap','ig']]},
+mob:{cut:[['ua','dp'],['fe','ig']],E:[['fe','sy'],['sy','ig'],['ua','sr','مقبول'],['sr','dp','معتمد'],['sr','fe','رفض المراجعة','b']]},
+rag:{cut:[['be','ig']],E:[['be','oc'],['oc','ix'],['ix','rr'],['rr','ct','نتائج كافية'],['rr','ix','ناقصة: وسّع الفهرس أو الاستعلام','b'],['ct','ig'],['ct','rr','استشهاد غير موثّق','b']]},
+agt:{cut:[['be','ig']],E:[['be','lp'],['lp','tr'],['tr','ap2','يحتاج أداة','',.5],['tr','ig','إجابة مباشرة','',.5],['ap2','sb','موافق'],['ap2','lp','مرفوض: أعد التخطيط','b'],['sb','lp','نتيجة الأداة: ملاحظة','b']]},
+llm:{cut:[['be','ig']],E:[['be','tk'],['tk','tn'],['tn','ev'],['ev','ig','مقبول'],['ev','tn','دون العتبة: ضبط وإعادة تدريب','b']]},
+shop:{cut:[['be','ig']],E:[['be','iv'],['iv','py'],['py','sh'],['sh','ig'],['py','iv','فشل الدفع: حرّر الحجز','b']]}};
+const PO={agt:['lp','tr','ap2','sb'],shop:['iv','py','sh']};
+PK.push({id:'ml',n:'بيانات وتعلم آلة',c:'#f472b6',cut:[['be','ig']],N:[['du','فهم البيانات','Data Understanding','stage','استكشاف البيانات المتاحة وجودتها وتمثيلها للمسألة','جمع البيانات الأولية|وصفها وإحصاءاتها|فحص الجودة والقيم الناقصة|تحديد مشكلات التمثيل','بيانات لا تمثل الواقع المستهدف'],['dpp','تهيئة البيانات','Data Preparation','stage','بناء مجموعة البيانات النهائية التي يتدرب عليها النموذج','اختيار البيانات|تنظيفها|اشتقاق الخصائص|تقسيم التدريب والتحقق والاختبار','تسرب بيانات الاختبار إلى التدريب'],['md','بناء النموذج','Modeling','loop','اختيار الخوارزميات وضبط معاملاتها وتدريبها','اختيار التقنية|تصميم الاختبار|التدريب|ضبط المعاملات','فرط التخصيص'],['em','تقييم النموذج','Evaluation','gate','هل يحقق النموذج هدف العمل لا الدقة وحدها؟','قياس الأداء على بيانات لم يرها|مقارنته بمعيار الأعمال|قرار الاعتماد','مقياس تقني جيد لا يخدم هدف العمل']],E:[['be','du'],['du','dpp'],['dpp','md'],['md','em'],['em','ig','معتمد'],['em','dpp','غير مرضٍ: أعد تهيئة البيانات','b']]});
+PK.push({id:'ent',n:'نظام مؤسسي / ERP',c:'#a3e635',cut:[['be','ig'],['ua','dp']],N:[['lg','التكامل مع الأنظمة القائمة','Legacy Integration','stage','ربط النظام الجديد بالأنظمة الحالية دون كسرها','جرد الواجهات القائمة|اختيار نمط التكامل|بناء الموصلات|اختبار التوافق','اعتماد خفي على سلوك غير موثق'],['mg','ترحيل البيانات','Data Migration','gate','نقل البيانات من النظام القديم مع التحقق من سلامتها','تخطيط الترحيل|ترحيل تجريبي|مطابقة السجلات|قرار الانتقال','فقدان أو تشويه سجلات في الطريق'],['ch','تدريب المستخدمين وإدارة التغيير','Change Management & Training','stage','تهيئة الناس للنظام الجديد قبل التشغيل','تحليل أثر التغيير على الأدوار|تدريب المستخدمين|دعم يوم التشغيل','نظام سليم يرفضه مستخدموه']],E:[['be','lg'],['lg','ig'],['ua','mg','مقبول'],['mg','ch','سليمة'],['ch','dp'],['mg','lg','خلل في التحويل: أصلح الموصل','b']]});
+PK.forEach(p=>{Object.assign(p,PX[p.id]);if(PO[p.id])p.N.sort((a,b)=>PO[p.id].indexOf(a[0])-PO[p.id].indexOf(b[0]))});
+const LV={S:['معيار دولي رسمي','#36d399'],F:['إطار أو معيار صناعي معتمد','#4aa3ff'],P:['ممارسة شائعة بلا معيار رسمي','#ffb020'],C:['تركيب خاص بهذا المخطط','#c77dff']};
+const TNE={stage:'Stage',router:'Router',loop:'Loop',gate:'Gate',store:'Store',test:'Test',metric:'Metric'};
+const EN={dz:'Disposal (Retirement)',du:'Data Understanding',dpp:'Data Preparation',md:'Modeling',em:'Evaluation',lg:'Legacy Integration',mg:'Data Migration',ch:'Change Mgmt & Training',in:'Request Intake',r1:'Change Triage',rv:'Risk Management',rq:'Requirements Definition',rs:'Business & Market Analysis',an:'Analysis & Decision Mgmt',ds:'Architecture & Design',pl:'Project Planning',be:'Implementation · Back end',fe:'Implementation · Front end',ig:'Integration & Build (CI)',tu:'Unit Testing',ti:'Integration Testing',te:'System / E2E Testing',ts:'Security Testing',pf:'Performance Testing',vf:'Quality Gate',db:'Defect Management',ua:'Acceptance (UAT)',dp:'Deployment / Transition',mo:'Monitoring (Operation)',mt:'Maintenance',qa:'Measurement (DORA)',rt:'Retrospective',au:'AuthN / AuthZ',ap:'API Design',sy:'Offline Sync',sr:'Store Review',oc:'OCR',ix:'Indexing',rr:'Retrieval & Re-ranking',ct:'Grounding & Citation',tr:'Tool Routing',sb:'Sandbox',ap2:'Human Approval',lp:'Agent Loop',tk:'Tokenization',tn:'Training',ev:'Model Evaluation',iv:'Inventory Reservation',py:'Payments',sh:'Fulfilment'};
+const STD={
+dz:['S','Disposal','ISO/IEC/IEEE 12207 – Disposal process','عملية إنهاء الخدمة Disposal في ISO/IEC/IEEE 12207'],
+du:['F','Data Understanding','CRISP-DM 1.0 – Data Understanding phase','مرحلة فهم البيانات في منهجية CRISP-DM'],
+dpp:['F','Data Preparation','CRISP-DM 1.0 – Data Preparation phase','مرحلة تهيئة البيانات في منهجية CRISP-DM'],
+md:['F','Modeling','CRISP-DM 1.0 – Modeling phase','مرحلة بناء النموذج في منهجية CRISP-DM'],
+em:['F','Evaluation (against business objectives)','CRISP-DM 1.0 – Evaluation phase','مرحلة التقييم في منهجية CRISP-DM'],
+lg:['P','Legacy Integration (Enterprise Integration Patterns)','Hohpe & Woolf 2003 – Enterprise Integration Patterns','كتاب أنماط التكامل المؤسسي لهوهبي وولف 2003'],
+mg:['P','Data Migration & Reconciliation','Data migration practice','ممارسة ترحيل البيانات ومطابقتها'],
+ch:['F','Organizational Change Management (ADKAR)','Prosci ADKAR model','نموذج ADKAR لإدارة التغيير'],
+in:['F','Request Intake / Service Request Management','ITIL 4 – Service request management; Scrum – Product Backlog','في ITIL إدارة طلبات الخدمة، وفي Scrum قائمة المنتج'],
+r1:['F','Change Triage (standard / normal / emergency changes)','ITIL 4 – Change enablement','في ITIL تمكين التغيير بأنواعه: القياسي والعادي والطارئ'],
+rv:['S','Risk Management','ISO/IEC/IEEE 12207 – Risk Management process; ISO 31000','عملية إدارة المخاطر في ISO/IEC/IEEE 12207، ومعيار ISO 31000'],
+rq:['S','Stakeholder Needs & Requirements Definition','ISO/IEC/IEEE 12207 – Stakeholder Needs and Requirements Definition; System/Software Requirements Definition; ISO/IEC/IEEE 29148; ISO/IEC 25010 (non-functional)','عمليتا تعريف احتياجات أصحاب المصلحة وتعريف المتطلبات في ISO/IEC/IEEE 12207، وهندسة المتطلبات في ISO/IEC/IEEE 29148، والمتطلبات غير الوظيفية في ISO/IEC 25010'],
+rs:['S','Business or Mission Analysis (partial)','ISO/IEC/IEEE 12207 – Business or Mission Analysis; benchmarking and reverse engineering as complementary practices','عملية تحليل الأعمال أو المهمة في ISO/IEC/IEEE 12207 جزئيًا، مع المقارنة المرجعية والهندسة العكسية ممارستين مكمّلتين'],
+an:['S','System Analysis & Decision Management','ISO/IEC/IEEE 12207 – System Analysis; Decision Management; ADR (practice)','عمليتا تحليل النظام وإدارة القرار في ISO/IEC/IEEE 12207، وسجل القرارات ADR ممارسة مكمّلة'],
+ds:['S','Architecture Definition & Design Definition','ISO/IEC/IEEE 12207; ISO/IEC/IEEE 42010 (architecture description)','عمليتا تعريف المعمارية وتعريف التصميم في ISO/IEC/IEEE 12207، ووصف المعمارية في ISO/IEC/IEEE 42010'],
+pl:['S','Project Planning','ISO/IEC/IEEE 12207 – Project Planning; PMBOK (WBS)','عملية تخطيط المشروع في ISO/IEC/IEEE 12207، وهيكل تقسيم العمل WBS من PMBOK'],
+be:['S','Implementation (back-end stream)','ISO/IEC/IEEE 12207 – Implementation; code review (practice). Splitting into parallel streams is a common organisation, not mandated','عملية التنفيذ في ISO/IEC/IEEE 12207؛ وتقسيمها إلى مسارين متوازيين تنظيم شائع لا يفرضه المعيار'],
+fe:['S','Implementation (front-end stream)','ISO/IEC/IEEE 12207 – Implementation; code review (practice). Splitting into parallel streams is a common organisation, not mandated','عملية التنفيذ في ISO/IEC/IEEE 12207؛ وتقسيمها إلى مسارين متوازيين تنظيم شائع لا يفرضه المعيار'],
+ig:['S','Integration / Continuous Integration','ISO/IEC/IEEE 12207 – Integration; CI (practice)','عملية التكامل في ISO/IEC/IEEE 12207، وتطبيقها المعتاد بالتكامل المستمر CI'],
+tu:['F','Unit (Component) Testing','ISTQB test levels; ISO/IEC/IEEE 29119; Test Pyramid (practice)','مستوى اختبار المكوّن في ISTQB وسلسلة ISO/IEC/IEEE 29119، وقاعدة Test Pyramid'],
+ti:['F','Integration Testing','ISTQB test levels; ISO/IEC/IEEE 29119','مستوى اختبار التكامل في ISTQB'],
+te:['F','System Testing (End-to-End)','ISTQB – system test level; "End-to-End" is a practice term','مستوى اختبار النظام في ISTQB، وتسمية End-to-End تسمية ممارسة'],
+ts:['F','Security Testing (SAST / dependency scanning)','NIST SP 800-218 SSDF; OWASP','إطار NIST للتطوير الآمن SSDF ومنظمة OWASP'],
+pf:['S','Performance Testing / Performance Efficiency','ISO/IEC 25010 – performance efficiency; ISTQB test type','خاصية كفاءة الأداء في ISO/IEC 25010، واختبار الأداء نوع اختبار في ISTQB'],
+vf:['S','Verification & Quality Assurance (Quality Gate)','ISO/IEC/IEEE 12207 – Verification; Quality Assurance; "Quality Gate" is a CI practice term','عمليتا التحقق وضمان الجودة في ISO/IEC/IEEE 12207، وبوابة الجودة تسمية شائعة في أنظمة CI'],
+db:['F','Defect Management & Root Cause Analysis','ISTQB – defect management','إدارة العيوب وتحليل السبب الجذري في ISTQB'],
+ua:['S','Validation / User Acceptance Testing (UAT)','ISO/IEC/IEEE 12207 – Validation; ISTQB acceptance testing','عملية التصديق في ISO/IEC/IEEE 12207، واختبار القبول UAT في ISTQB'],
+dp:['S','Transition (Deployment; Canary / Blue-Green)','ISO/IEC/IEEE 12207 – Transition; deployment strategies (practice)','عملية الانتقال في ISO/IEC/IEEE 12207، والنشر التدريجي Canary وBlue-Green ممارسة معروفة'],
+mo:['S','Operation – Monitoring (SLO)','ISO/IEC/IEEE 12207 – Operation; Google SRE – SLOs','عملية التشغيل في ISO/IEC/IEEE 12207، وأهداف الخدمة SLO من ممارسات SRE'],
+mt:['S','Maintenance','ISO/IEC/IEEE 12207 – Maintenance; ISO/IEC/IEEE 14764','عملية الصيانة في ISO/IEC/IEEE 12207 ومعيار ISO/IEC/IEEE 14764'],
+qa:['S','Measurement (DORA metrics)','ISO/IEC/IEEE 12207 – Measurement; DORA: change lead time, deployment frequency, failed deployment recovery time, change fail rate, deployment rework rate','عملية القياس في ISO/IEC/IEEE 12207، ومؤشرات DORA الخمسة: زمن التغيير وتكرار النشر وزمن استعادة النشر الفاشل ومعدل فشل التغيير ومعدل إعادة العمل'],
+rt:['F','Retrospective / Lessons Learned','Scrum Guide – Sprint Retrospective; ISO/IEC/IEEE 12207 – Knowledge Management (organizational)','حدث المراجعة في دليل Scrum، ويقابله في المعيار عملية إدارة المعرفة'],
+au:['F','Authentication & Authorization','OWASP ASVS','معيار OWASP للتحقق من أمان التطبيقات ASVS'],
+ap:['P','API Design (OpenAPI)','OpenAPI Specification','مواصفة OpenAPI لوصف الواجهات'],
+sy:['P','Offline-first Synchronization','Engineering practice, no formal standard','ممارسة هندسية شائعة بلا معيار رسمي'],
+sr:['F','App Store Review','Apple App Store Review Guidelines; Google Play Developer Program Policies','إرشادات مراجعة متجر آبل وسياسات متجر جوجل بلاي'],
+oc:['P','Optical Character Recognition (OCR)','Document ingestion practice','ممارسة معروفة في إدخال المستندات'],
+ix:['P','Indexing (lexical / semantic)','Information retrieval practice','ممارسة استرجاع المعلومات'],
+rr:['P','Retrieval & Re-ranking (RAG)','Lewis et al. 2020 – Retrieval-Augmented Generation','ورقة لويس وآخرين 2020 للتوليد المعزز بالاسترجاع RAG'],
+ct:['P','Grounding & Citation','RAG evaluation practice (faithfulness, attribution)','ممارسة في تقييم أنظمة RAG: الأمانة للمصدر والإسناد'],
+tr:['P','Tool Routing / Function Calling','LLM tool-use practice','ممارسة استدعاء الأدوات في النماذج اللغوية'],
+sb:['P','Sandboxed Execution','Security practice: isolation, least privilege','ممارسة أمنية: العزل وأقل صلاحية'],
+ap2:['P','Human-in-the-Loop Approval','Agent safety practice','ممارسة سلامة الوكلاء: موافقة بشرية قبل الإجراءات الحساسة'],
+lp:['P','Agent Loop (ReAct)','Yao et al. 2022 – ReAct','ورقة ياو وآخرين 2022 عن ReAct'],
+tk:['P','Tokenization (BPE)','Sennrich et al. 2016 – Byte Pair Encoding','ورقة سينريش وآخرين 2016 عن BPE'],
+tn:['P','Pre-training / Fine-tuning','LLM training practice','ممارسة تدريب النماذج اللغوية'],
+ev:['P','Model Evaluation','Benchmarking practice','ممارسة التقييم بالمقاييس المعيارية'],
+iv:['C','Inventory Reservation','Composition of this map based on order-management practice','تركيب خاص بهذا المخطط مبني على ممارسات إدارة الطلبات'],
+py:['F','Payments (PCI DSS)','PCI DSS – Payment Card Industry Data Security Standard','معيار PCI DSS لأمن بيانات بطاقات الدفع'],
+sh:['P','Order Fulfilment','Order-management practice','ممارسة إدارة الطلبات والشحن']};
+const SUB={
+in:{i:'طلب خام من بريد أو نموذج أو اجتماع',o:'بطاقة طلب مسجّلة',n:'a:استلام الطلب من قناته|Receive request|s;b:تسجيل في نظام التتبع|Log in tracker|t;c:اكتمال البيانات؟|Complete?|d;d:استيضاح من صاحب الطلب|Clarify with requester|s;e:بحث عن طلب مكرر|Duplicate check|d;f:ربط بالطلب الأصلي|Link to original|s;g:إسناد رقم ومسؤول|Assign ID and owner|s',e:'a>b,b>c,c>e:مكتمل,c>d:ناقص,d>c:تمت الإضافة!,e>g:جديد,e>f:مكرر,f>g'},
+r1:{i:'بطاقة طلب مسجّلة',o:'طلب موجَّه إلى مساره',n:'a:قراءة الطلب|Read request|s;b:تقدير الحجم والجدّة|Size and novelty|s;c:تقدير الخطورة والأثر|Risk and impact|s;d:مصفوفة التصنيف|Classification matrix|t;e:أي مسار؟|Which lane?|d;f:المسار السريع: تعديل قياسي|Fast lane (standard change)|x;g:المسار الكامل: تغيير عادي|Full lane (normal change)|x;h:مسار المخاطر: مراجعة إضافية|Risk lane|x',e:'a>b,b>c,c>d,d>e,e>g:منتج أو ميزة جديدة,e>f:تعديل صغير معروف,e>h:عالي الخطورة'},
+rv:{i:'طلب عالي الخطورة',o:'سجل مخاطر وضوابط معتمدة',n:'a:تحديد المخاطر|Risk identification|s;b:تحليل الاحتمال والأثر|Likelihood and impact analysis|s;c:تقييم مقابل معايير القبول|Evaluate against criteria|s;d:هل المخاطر مقبولة؟|Acceptable?|d;e:اختيار المعالجة: تجنب أو تخفيف أو نقل أو قبول|Risk treatment options|s;f:ضوابط وخطة طوارئ|Controls and contingency plan|s;g:سجل المخاطر|Risk register|x',e:'a>b,b>c,c>d,d>g:مقبولة,d>e:غير مقبولة,e>f,f>c:إعادة التقييم!'},
+rq:{i:'فكرة العميل وأهدافه',o:'خط أساس المتطلبات',n:'a:استخراج الاحتياجات: مقابلات وورش وملاحظة|Elicitation|s;b:تصنيف وظيفي وغير وظيفي|Classify FR and NFR|s;c:تحليل التعارض والأولوية MoSCoW|Conflict and priority analysis|s;d:كتابة قصص المستخدم ومعايير القبول|User stories and acceptance criteria|s;e:هل كل متطلب قابل للاختبار؟|Testable?|d;f:مراجعة أصحاب المصلحة|Stakeholder review|d;g:خط أساس المتطلبات|Requirements baseline|x;h:مصفوفة التتبع|Traceability matrix|t',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>d:غامض!,f>g:معتمد,f>c:تعارض!,g>h'},
+rs:{i:'متطلبات معتمدة',o:'تقرير الفجوات والفرص',n:'a:تحديد المسألة وفرصتها|Problem and opportunity space|s;b:حصر حلول مشابهة: قديمة ومتوسطة وحديثة|Survey existing solutions|s;c:تفكيك أبرز الحلول: هندسة عكسية|Reverse engineering|t;d:مقارنة مرجعية|Benchmarking|s;e:استشراف اتجاهات السوق والتقنية|Trend scan|s;f:هل المشروع ممكن ومجدٍ؟|Feasible?|d;g:تقرير الفجوات والفرص|Gap and opportunity report|x',e:'a>b,b>c,c>d,b>e,d>f,e>f,f>g:نعم,f>a:لا: أعد صياغة المسألة!'},
+an:{i:'تقرير الفجوات والفرص',o:'قرار موثّق وحل مقترح',n:'a:تحديد معايير القرار وأوزانها|Decision criteria and weights|s;b:توليد البدائل|Generate alternatives|s;c:تقييم كل بديل: دراسة مفاضلة|Trade study|t;d:تحليل الحساسية|Sensitivity analysis|s;e:هل يوجد خيار راجح؟|Clear preferred option?|d;f:توليف الحل المقترح|Synthesize solution|s;g:تسجيل القرار ADR|Record decision (ADR)|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>b:متقاربة: أضف بدائل!,f>g'},
+ds:{i:'قرار موثّق وحل مقترح',o:'وثيقة العمل والمعمارية',n:'a:استخلاص محركات المعمارية|Architecture drivers|s;b:اختيار الأسلوب المعماري|Architectural style|s;c:تحديد المكوّنات وحدودها|Components and boundaries|s;d:تصميم الواجهات والبيانات|Interfaces and data design|s;e:هل يحقق المتطلبات غير الوظيفية؟|Meets NFRs?|d;f:وصف المعمارية بوجهات نظر|Architecture description (views)|x;g:وثيقة العمل والمعمارية|Work and architecture document|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>b:لا!,f>g'},
+pl:{i:'وثيقة العمل والمعمارية',o:'خطة معتمدة وخط إنتاج',n:'a:تفكيك العمل WBS|Work breakdown (WBS)|s;b:تقدير الجهد والمدة|Effort and duration estimate|s;c:الاعتماديات والمسار الحرج|Dependencies and critical path|t;d:تخصيص الموارد|Resource allocation|s;e:سجل المخاطر وخطط المعالجة|Risk register and responses|s;f:المعالم وخط الإنتاج|Milestones and pipeline|s;g:هل الجدول يوافق القيود؟|Fits constraints?|d;h:الخطة المعتمدة|Approved plan|x',e:'a>b,b>c,c>d,d>e,e>f,f>g,g>h:نعم,g>b:لا: أعد التقدير!'},
+be:{i:'مهام الخلفية من الخطة',o:'شيفرة مدمجة',n:'a:سحب مهمة من القائمة|Pick task|s;b:إنشاء فرع|Create branch|s;c:نمذجة البيانات والواجهة البرمجية|Data and API modeling|s;d:كتابة الشيفرة مع اختبارات الوحدة|Code with unit tests|s;e:هل نجح البناء والاختبار محليًا؟|Local build and tests pass?|d;f:طلب دمج ومراجعة الشيفرة|Pull request and code review|d;g:الدمج في الفرع الرئيسي|Merge to main|s',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>d:لا!,f>g:معتمد,f>d:تعديلات مطلوبة!'},
+fe:{i:'مهام الواجهة من الخطة',o:'شيفرة مدمجة',n:'a:سحب مهمة من القائمة|Pick task|s;b:تصميم الواجهة وحالاتها: تحميل وخطأ وفراغ|UI design with states|s;c:بناء المكوّنات|Build components|s;d:ربط البيانات بالواجهة البرمجية|Bind data to API|s;e:فحص إمكانية الوصول|Accessibility check|d;f:طلب دمج ومراجعة|Pull request and review|d;g:الدمج في الفرع الرئيسي|Merge to main|s',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>c:لا!,f>g:معتمد,f>c:تعديلات مطلوبة!'},
+ig:{i:'شيفرة مدمجة من المسارين',o:'حزمة قابلة للتشغيل',n:'a:تغيير مدموج يُطلق الخط|Trigger on merge|s;b:سحب المصدر|Checkout|s;c:تثبيت الاعتماديات|Install dependencies|s;d:بناء الحزمة|Build artifact|s;e:هل نجح البناء؟|Build ok?|d;f:نشر الحزمة في السجل|Publish to artifact registry|x;g:إطلاق اختبارات الخط|Trigger test stages|s',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>c:لا: أعد المحاولة!,f>g'},
+tu:{i:'حزمة مبنية',o:'تقرير اختبار الوحدات',n:'a:اكتشاف الاختبارات|Discover tests|s;b:بيئة معزولة مع محاكيات|Isolated env with mocks|t;c:تشغيل متوازٍ|Parallel run|s;d:قياس التغطية|Coverage measurement|s;e:نجحت كلها والتغطية كافية؟|All pass and coverage ok?|o;f:تقرير ناجح|Passing report|x;g:إيقاف الخط وإشعار المطوّر|Stop pipeline and notify|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>g:لا'},
+ti:{i:'حزمة اجتازت اختبار الوحدات',o:'تقرير اختبار التكامل',n:'a:تهيئة بيئة: قاعدة بيانات وخدمات|Provision environment|t;b:تحميل بيانات اختبار|Seed test data|s;c:تشغيل سيناريوهات التفاعل|Run interaction scenarios|s;d:التحقق من عقود الواجهات|Contract checks|t;e:تنظيف البيئة|Teardown|s;f:نجحت التفاعلات؟|Interactions pass?|o;g:تقرير ناجح|Passing report|x;h:إيقاف وإشعار|Stop and notify|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>h:لا'},
+te:{i:'حزمة اجتازت اختبار التكامل',o:'تقرير الاختبار الشامل',n:'a:تحديد المسارات الحرجة|Critical user journeys|s;b:بيئة شبيهة بالإنتاج|Production-like environment|t;c:أتمتة المتصفح أو الجهاز|Browser or device automation|t;d:تنفيذ السيناريو|Execute scenario|s;e:التقاط لقطات وسجلات|Capture screenshots and logs|s;f:نجحت المسارات الحرجة؟|Critical journeys pass?|o;g:تقرير ناجح|Passing report|x;h:إيقاف مع أدلة الفشل|Stop with failure evidence|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>h:لا'},
+ts:{i:'حزمة اجتازت الاختبار الشامل',o:'تقرير الفحص الأمني',n:'a:فحص الأسرار المسرّبة|Secret scanning|s;b:فحص التبعيات المعروفة الثغرات|Dependency scan (SCA)|t;c:تحليل ساكن للشيفرة|Static analysis (SAST)|t;d:اختبار ديناميكي للتطبيق|Dynamic testing (DAST)|t;e:تصنيف النتائج بالخطورة CVSS|Severity triage (CVSS)|s;f:لا ثغرة فوق العتبة؟|No finding above threshold?|o;g:تقرير ناجح|Passing report|x;h:إيقاف وتذكرة أمنية|Block and open security ticket|x',e:'a>b,a>c,a>d,b>e,c>e,d>e,e>f,f>g:نعم,f>h:لا'},
+pf:{i:'حزمة اجتازت الفحص الأمني',o:'تقرير الأداء',n:'a:تحديد حمل الذروة المتوقع|Peak load model|s;b:كتابة سيناريو الحمل|Load script|t;c:اختبار الحمل|Load test|s;d:قياس زمن الاستجابة والإنتاجية|Latency and throughput|s;e:اختبار الإجهاد حتى الانهيار|Stress to failure|s;f:ضمن أهداف الأداء؟|Within targets?|o;g:تقرير ناجح|Passing report|x;h:إيقاف وتقرير الاختناقات|Stop with bottleneck report|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>h:لا'},
+vf:{i:'تقارير الاختبارات',o:'قرار ترقية الإصدار',n:'a:تجميع نتائج الاختبارات|Collect test results|s;b:تجميع التغطية وجودة الشيفرة|Coverage and code quality|s;c:تجميع نتائج الفحص الأمني|Security results|s;d:تطبيق العتبات المتفق عليها|Apply agreed thresholds|t;e:هل استوفى كل العتبات؟|All thresholds met?|o;f:ترقية الإصدار|Promote build|x;g:رفض وإعادة للإصلاح|Reject and send to fix|x',e:'a>d,b>d,c>d,d>e,e>f:نعم,e>g:لا'},
+db:{i:'فشل من الخط أو النشر',o:'إصلاح مدموج',n:'a:استلام الفشل مع سجلاته|Receive failure and logs|s;b:إعادة إنتاج الفشل|Reproduce|s;c:عزل الموضع بالتنصيف|Isolate (bisect)|t;d:تحليل السبب الجذري|Root cause analysis (5 Whys)|t;e:كتابة اختبار انحدار يفشل|Write failing regression test|s;f:الإصلاح|Fix|s;g:هل ينجح الاختبار؟|Test passes?|d;h:دمج الإصلاح وإعادة الخط|Merge fix and rerun pipeline|x',e:'a>b,b>c,c>d,d>e,e>f,f>g,g>h:نعم,g>f:لا!'},
+ua:{i:'إصدار اجتاز بوابة الجودة',o:'قبول موقَّع أو طلبات تغيير',n:'a:نشر النسخة في بيئة تجريبية|Deploy to staging|s;b:تهيئة بيانات القبول|Acceptance data|s;c:تنفيذ سيناريوهات القبول مع العميل|Run acceptance scenarios|s;d:تسجيل الملاحظات|Record findings|s;e:هل يقبل العميل؟|Customer accepts?|o;f:قبول موقَّع|Signed acceptance|x;g:رفض وطلبات تغيير|Rejection and change requests|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>g:لا'},
+dp:{i:'إصدار مقبول',o:'إصدار يعمل في الإنتاج',n:'a:تجهيز البيئة والإعدادات كشيفرة|Provision with IaC|t;b:ترحيل قاعدة البيانات|Database migration|s;c:نشر على نسبة صغيرة Canary|Canary release|s;d:مراقبة الأخطاء وزمن الاستجابة|Watch error rate and latency|s;e:هل الصحة سليمة؟|Healthy?|o;f:توسيع النشر تدريجيًا|Gradual rollout|s;g:اكتمل الإصدار|Release complete|x;h:تراجع Rollback|Rollback|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>h:لا,f>g'},
+mo:{i:'إصدار يعمل في الإنتاج',o:'قياسات وتنبيهات',n:'a:جمع القياسات والسجلات والتتبع|Collect metrics, logs, traces|t;b:حساب مؤشرات مستوى الخدمة SLI|Compute SLIs|s;c:مقارنتها بالأهداف SLO|Compare with SLOs|s;d:هل هو ضمن ميزانية الخطأ؟|Within error budget?|d;e:لوحة المؤشرات|Dashboard|x;f:تنبيه المناوب|Alert on-call|s;g:فتح حادثة|Open incident|x',e:'a>b,b>c,c>d,d>e:نعم,d>f:لا,f>g'},
+mt:{i:'بلاغ أو حادثة',o:'تحديث أو إغلاق',n:'a:فرز البلاغ بالأثر والاستعجال|Triage by impact and urgency|s;b:تصنيف الصيانة|Classify (corrective, adaptive, perfective, preventive)|d;c:إصلاح عاجل Hotfix|Hotfix|s;d:تحليل الأثر|Impact analysis|s;e:تغيير مخطط له|Planned change|s;f:التنفيذ والاختبار عبر الخط نفسه|Implement via the same pipeline|s;g:توثيق وإغلاق البلاغ|Document and close|x',e:'a>b,b>c:تصحيحي عاجل,b>d:غير عاجل,d>e,c>f,e>f,f>g'},
+qa:{i:'بيانات الخط والإنتاج',o:'مؤشرات وتوصيات',n:'a:تحديد أسئلة القياس GQM|Measurement questions (GQM)|s;b:جمع بيانات النشر والتغيير|Collect deployment and change data|s;c:زمن التغيير وتكرار النشر|Lead time and deployment frequency|s;d:معدل فشل التغيير ومعدل إعادة العمل|Change fail rate and rework rate|s;e:زمن استعادة النشر الفاشل|Failed deployment recovery time|s;f:مقارنة بالفترة السابقة|Trend against prior period|s;g:لوحة المؤشرات والتوصيات|Dashboard and actions|x',e:'a>b,b>c,b>d,b>e,c>f,d>f,e>f,f>g'},
+rt:{i:'مؤشرات ونتائج الدورة',o:'إجراءات تحسين محدّثة',n:'a:تهيئة الجلسة|Set the stage|s;b:جمع الحقائق|Gather data|s;c:توليد الرؤى|Generate insights|s;d:اختيار إجراءات محددة|Decide what to do|s;e:هل لكل إجراء مسؤول وقياس؟|Owner and measure per action?|d;f:تحديث القوالب والتوثيق|Update templates and docs|x;g:إغلاق الجلسة|Close|s',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>d:لا!,f>g'},
+dz:{i:'قرار إنهاء عمر المنتج',o:'سجل إنهاء الخدمة',n:'a:إشعار المستخدمين وتحديد البديل|Notify users and name replacement|s;b:ترحيل أو أرشفة البيانات|Migrate or archive data|s;c:هل اكتملت الأرشفة؟|Archive verified?|d;d:إيقاف الخدمة وسحب الصلاحيات|Shut down and revoke access|s;e:إتلاف البيانات الحساسة وفق السياسة|Destroy sensitive data per policy|s;f:سجل إنهاء الخدمة|Decommission record|x',e:'a>b,b>c,c>d:نعم,c>b:لا!,d>e,e>f'},
+au:{i:'طلب مستخدم',o:'جلسة موثّقة بصلاحيات',n:'a:طلب دخول|Login request|s;b:التحقق من الهوية بكلمة مرور وعامل ثان|Authenticate (password + MFA)|t;c:هل الهوية صحيحة؟|Valid identity?|d;d:إصدار رمز الجلسة|Issue session token|s;e:التحقق من الصلاحية لكل طلب|Authorize each request (RBAC)|t;f:سجل التدقيق|Audit log|x',e:'a>b,b>c,c>d:نعم,c>a:لا: أعد المحاولة!,d>e,e>f'},
+ap:{i:'متطلبات الواجهة',o:'عقد واجهة موثّق',n:'a:تحديد الموارد والعمليات|Resources and operations|s;b:كتابة العقد OpenAPI|Write contract (OpenAPI)|t;c:التحقق من مدخلات كل طلب|Validate requests|s;d:إدارة الإصدارات وعدم كسر التوافق|Versioning and compatibility|s;e:هل العقد متوافق مع العملاء؟|Backward compatible?|d;f:توثيق وتوليد مكتبات العميل|Docs and client SDKs|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>d:لا!'},
+sy:{i:'تعديلات المستخدم دون اتصال',o:'نسخة موحّدة',n:'a:كتابة محلية|Local write|s;b:طابور العمليات المعلّقة|Pending operation queue|x;c:هل الاتصال متاح؟|Online?|d;d:إرسال الدفعة|Send batch|s;e:هل يوجد تعارض؟|Conflict?|d;f:حل التعارض: آخر كتابة أو دمج|Resolve conflict (LWW or merge)|s;g:تثبيت النسخة|Commit version|x',e:'a>b,b>c,c>d:نعم,c>b:لا: انتظر الاتصال!,d>e,e>g:لا,e>f:نعم,f>g'},
+sr:{i:'إصدار مقبول',o:'تطبيق منشور',n:'a:بناء إصدار موقَّع|Signed release build|s;b:فحص الامتثال لسياسات المتجر|Policy compliance checklist|s;c:تجهيز البطاقة وبيانات الخصوصية|Listing and privacy labels|s;d:تقديم للمراجعة|Submit for review|s;e:هل يقبل المتجر؟|Store approves?|o;f:النشر في المتجر|Publish|x;g:رفض مع ملاحظات|Rejected with notes|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>g:لا'},
+oc:{i:'صور صفحات',o:'نص بإحداثياته',n:'a:تحسين الصورة: تصحيح الميل والتباين|Preprocess (deskew, binarize)|s;b:تحليل التخطيط|Layout analysis|t;c:كشف أسطر النص|Text line detection|t;d:التعرف على الحروف|Character recognition|t;e:تصحيح لاحق بالمعجم|Lexicon post-correction|s;f:هل الثقة كافية؟|Confidence ok?|d;g:نص مع إحداثياته|Text with coordinates|x;h:مراجعة بشرية|Human review|s',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>h:لا,h>g'},
+ix:{i:'نصوص مستخرجة',o:'فهارس جاهزة للبحث',n:'a:تقطيع النص إلى مقاطع|Chunking|s;b:توليد التضمينات|Embedding|t;c:فهرس لفظي مقلوب|Inverted index|t;d:فهرس متجهي|Vector index (ANN)|t;e:تخزين البيانات الوصفية|Metadata store|x;f:فحص سلامة الفهرس|Index health check|s',e:'a>b,a>c,b>d,c>e,d>e,e>f'},
+rr:{i:'سؤال المستخدم',o:'سياق مرتّب',n:'a:فهم السؤال وإعادة صياغته|Query understanding and rewrite|s;b:بحث لفظي BM25|Lexical search (BM25)|t;c:بحث دلالي بالتضمين|Dense retrieval|t;d:دمج القوائم RRF|Rank fusion (RRF)|s;e:إعادة ترتيب بنموذج متقاطع|Cross-encoder rerank|t;f:هل المقاطع كافية؟|Passages sufficient?|o;g:تجميع السياق|Context assembly|x;h:توسيع الاستعلام|Query expansion|s',e:'a>b,a>c,b>d,c>d,d>e,e>f,f>g:نعم,f>h:لا'},
+ct:{i:'إجابة مولَّدة',o:'إجابة موثّقة',n:'a:توليد الإجابة من المقاطع|Generate answer from passages|s;b:ربط كل ادعاء بمقطع|Claim-to-passage attribution|s;c:فحص أن المقطع يدعم الادعاء|Entailment check|t;d:هل كل الادعاءات مدعومة؟|All claims supported?|o;e:إدراج الاستشهاد|Insert citation|x;f:حذف الادعاء غير المدعوم|Drop unsupported claim|x',e:'a>b,b>c,c>d,d>e:نعم,d>f:لا'},
+tr:{i:'طلب الوكيل',o:'إجراء أو إجابة',n:'a:فهم الطلب|Parse intent|s;b:مطابقة مع تعريفات الأدوات|Match tool schemas|t;c:هل تلزم أداة؟|Tool needed?|d;d:بناء الوسائط والتحقق منها|Build and validate arguments|s;e:فحص الصلاحية|Permission check|s;f:إجابة مباشرة|Direct answer|x',e:'a>b,b>c,c>d:نعم,c>f:لا,d>e'},
+sb:{i:'أداة معتمدة',o:'نتيجة التنفيذ',n:'a:إنشاء حاوية معزولة|Create isolated container|s;b:تقييد الصلاحيات والموارد|Limit privileges and resources|t;c:تنفيذ الأداة|Run tool|s;d:هل انتهت المهلة أو تجاوز الحد؟|Timeout or limit exceeded?|d;e:التقاط المخرجات|Capture output|s;f:إنهاء العملية بالقوة|Kill process|s;g:تدمير الحاوية وسجل التدقيق|Destroy container and audit log|x',e:'a>b,b>c,c>d,d>e:لا,d>f:نعم,e>g,f>g'},
+ap2:{i:'إجراء حساس مقترح',o:'قرار موثّق',n:'a:وصف الإجراء وأثره|Describe action and impact|s;b:تصنيف الحساسية|Sensitivity class|d;c:موافقة آلية|Auto-approve|s;d:طلب موافقة بشرية|Request human approval|s;e:هل وافق الإنسان؟|Human approves?|o;f:تنفيذ الإجراء|Proceed|x;g:رفض الإجراء|Reject|x',e:'a>b,b>c:منخفضة,b>d:حساسة,c>f,d>e,e>f:نعم,e>g:لا'},
+lp:{i:'مهمة الوكيل',o:'إجابة نهائية',n:'a:ملاحظة الحالة|Observe|s;b:استدلال وتخطيط الخطوة|Reason|s;c:اختيار فعل|Choose action|s;d:تنفيذ الفعل|Act|s;e:تقييم النتيجة|Evaluate result|s;f:هل انتهت المهمة؟|Task complete?|d;g:الإجابة النهائية|Final answer|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>a:لا!'},
+tk:{i:'نص خام',o:'أرقام الرموز',n:'a:تطبيع يونيكود NFKC|Unicode normalization (NFKC)|s;b:تجزئة مسبقة: مسافات وعلامات|Pre-tokenization|s;c:تطبيق دمجات BPE|Apply BPE merges|t;d:إضافة الرموز الخاصة|Add special tokens|s;e:تحويل الرموز إلى أرقام|Map tokens to IDs|s;f:قص أو حشو للطول|Truncate or pad|s;g:متتالية أرقام|Token IDs|x',e:'a>b,b>c,c>d,d>e,e>f,f>g'},
+tn:{i:'بيانات التدريب',o:'نموذج مدرَّب',n:'a:سحب دفعة بيانات|Load batch|s;b:تمرير أمامي|Forward pass|s;c:حساب الخسارة|Loss|s;d:انتشار عكسي|Backpropagation|t;e:تحديث الأوزان بالمحسِّن|Optimizer step|t;f:تقييم وحفظ نقطة استرجاع كل N خطوة|Eval and checkpoint|s;g:هل تحقق شرط الإيقاف؟|Stopping criterion met?|d;h:نموذج مدرَّب|Trained model|x',e:'a>b,b>c,c>d,d>e,e>f,f>g,g>h:نعم,g>a:لا!'},
+ev:{i:'نموذج مدرَّب',o:'قرار اعتماد',n:'a:تحميل مجموعة التقييم الذهبية|Load golden set|s;b:تشغيل النموذج|Run model|s;c:حساب المقاييس|Compute metrics|s;d:مقارنة بالنموذج السابق|Compare to baseline|s;e:تحليل الأخطاء بحسب الفئة|Error analysis by category|s;f:هل تجاوز عتبة القبول؟|Above acceptance threshold?|o;g:اعتماد النموذج|Approve model|x;h:العودة للتدريب|Back to training|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>h:لا'},
+iv:{i:'طلب شراء',o:'كمية محجوزة',n:'a:التحقق من توفر الكمية|Check availability|s;b:حجز الكمية بمهلة|Reserve with TTL|s;c:هل نجح الحجز؟|Reserved?|d;d:تأكيد الحجز|Confirm reservation|x;e:إشعار النفاد|Out-of-stock notice|x',e:'a>b,b>c,c>d:نعم,c>e:لا'},
+py:{i:'طلب مع حجز',o:'دفع مؤكَّد',n:'a:إنشاء الطلب|Create order|s;b:توجيه العميل إلى بوابة الدفع|Redirect to payment provider|t;c:تفويض الدفع|Authorize payment|s;d:هل نجح التفويض؟|Authorization approved?|o;e:تأكيد واستلام الدفع|Capture and receipt|x;f:معالجة الفشل وتحرير الحجز|Handle failure and release reservation|x',e:'a>b,b>c,c>d,d>e:نعم,d>f:لا'},
+sh:{i:'طلب مدفوع',o:'شحنة مسلَّمة',n:'a:تجهيز الطلب وتعبئته|Pick and pack|s;b:اختيار الناقل وطباعة الملصق|Carrier and label|s;c:تسليم الشحنة للناقل|Hand over to carrier|s;d:تتبع الشحنة|Tracking|t;e:هل تم التسليم؟|Delivered?|d;f:إشعار العميل|Notify customer|x;g:معالجة الإرجاع|Handle return|s',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>g:لا,g>f'},
+du:{i:'مصادر البيانات',o:'تقرير جودة البيانات',n:'a:جمع البيانات الأولية|Collect initial data|s;b:وصف البيانات|Describe data|s;c:استكشاف بالإحصاء والرسوم|Explore|s;d:هل الجودة كافية؟|Quality sufficient?|d;e:تقرير جودة البيانات|Data quality report|x',e:'a>b,b>c,c>d,d>e:نعم,d>a:لا: اجمع المزيد!'},
+dpp:{i:'بيانات مفهومة',o:'مجموعة بيانات جاهزة',n:'a:اختيار البيانات|Select data|s;b:تنظيف البيانات|Clean data|s;c:بناء خصائص جديدة|Construct features|s;d:دمج المصادر|Integrate sources|s;e:تنسيق للنمذجة|Format for modeling|s;f:تقسيم تدريب وتحقق واختبار|Train, validation, test split|s;g:مجموعة بيانات جاهزة|Prepared dataset|x',e:'a>b,b>c,c>d,d>e,e>f,f>g'},
+md:{i:'مجموعة بيانات جاهزة',o:'نموذج مرشح',n:'a:اختيار تقنية النمذجة|Select modeling technique|s;b:تصميم الاختبار|Generate test design|s;c:بناء النموذج|Build model|s;d:ضبط المعاملات|Tune hyperparameters|t;e:تقييم تقني للنموذج|Assess model|s;f:هل الأداء التقني كافٍ؟|Technically sufficient?|d;g:نموذج مرشح|Candidate model|x',e:'a>b,b>c,c>d,d>e,e>f,f>g:نعم,f>d:لا!'},
+em:{i:'نموذج مرشح',o:'قرار الاعتماد',n:'a:تقييم النتائج مقابل أهداف العمل|Evaluate against business objectives|s;b:مراجعة العملية|Review process|s;c:تحديد الخطوات التالية|Determine next steps|s;d:هل يحقق الهدف؟|Meets business objectives?|o;e:اعتماد للنشر|Approve for deployment|x;f:العودة لتهيئة البيانات|Back to data preparation|x',e:'a>b,b>c,c>d,d>e:نعم,d>f:لا'},
+lg:{i:'الأنظمة القائمة',o:'موصل موثّق',n:'a:جرد الواجهات والاعتماديات القائمة|Inventory existing interfaces|s;b:اختيار نمط التكامل|Choose integration style|s;c:بناء موصل أو طبقة حماية|Build adapter or anti-corruption layer|t;d:اختبار التوافق ببيانات حقيقية|Compatibility test|s;e:هل هو متوافق؟|Compatible?|d;f:توثيق العقود|Document contracts|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>c:لا!'},
+mg:{i:'بيانات النظام القديم',o:'بيانات مرحّلة',n:'a:تحليل بنية المصدر والهدف|Profile source and target|s;b:كتابة قواعد التحويل|Mapping rules|s;c:ترحيل تجريبي|Trial migration|s;d:مطابقة السجلات والمجاميع|Reconcile counts and checksums|t;e:هل تطابقت؟|Reconciled?|o;f:ترحيل نهائي في نافذة الانتقال|Cutover migration|x;g:إصلاح قواعد التحويل|Fix mapping rules|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>g:لا'},
+ch:{i:'المستخدمون',o:'مستخدمون جاهزون',n:'a:الوعي بضرورة التغيير|Awareness|s;b:الرغبة والمشاركة|Desire|s;c:المعرفة بالتدريب|Knowledge|s;d:القدرة بالممارسة والدعم|Ability|s;e:هل المستخدمون جاهزون؟|Users ready?|d;f:التعزيز بعد التشغيل|Reinforcement|x',e:'a>b,b>c,c>d,d>e,e>f:نعم,e>c:لا!'}};
+const SUB_P={};
+function parseSub(id){if(SUB_P[id])return SUB_P[id];const sd=SUB[id];if(!sd)return null;const nd={},order=[];
+ sd.n.split(';').forEach(s=>{const i=s.indexOf(':'),k=s.slice(0,i),p=s.slice(i+1).split('|');nd[k]={key:k,ar:p[0],en:p[1],k:p[2]};order.push(k)});
+ const e=sd.e.split(',').map(x=>{let back=false;if(x.endsWith('!')){back=true;x=x.slice(0,-1)}const g=x.indexOf('>'),a=x.slice(0,g);let r=x.slice(g+1),l='';const c=r.indexOf(':');if(c>=0){l=r.slice(c+1);r=r.slice(0,c)}return{a,b:r,l,back}});
+ const ly={};order.forEach(k=>ly[k]=0);for(let it=0;it<order.length+2;it++)e.forEach(x=>{if(!x.back&&ly[x.b]<ly[x.a]+1)ly[x.b]=ly[x.a]+1});
+ const L=Math.max(...Object.values(ly))+1,rows={};order.forEach(k=>{(rows[ly[k]]=rows[ly[k]]||[]).push(k)});
+ const pos={},rc={};for(let l=0;l<L;l++){const r=rows[l]||[];r.forEach((k,i)=>pos[k]=[L>1?l/(L-1):.5,(i+1)/(r.length+1)])}
+ const hasIn={};e.forEach(x=>{if(!x.back)hasIn[x.b]=1});
+ const reach=k=>{const s=new Set([k]),st=[k];while(st.length){const a=st.pop();e.forEach(x=>{if(!x.back&&x.a==a&&!s.has(x.b)){s.add(x.b);st.push(x.b)}})}return s};order.forEach(k=>rc[k]=reach(k));
+ return SUB_P[id]={nd,order,e,ly,L,rows,pos,rc,src:order.filter(k=>!hasIn[k]),snk:order.filter(k=>!e.some(x=>x.a==k)),o:order.find(k=>nd[k].k=='o'),ia:sd.i,oa:sd.o}}
+const RW=300,RH=170,CW=360,ROW=240,HG=80,FONT='"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif';
+const PF={tu:.08,ti:.1,te:.12,ts:.08,pf:.08,vf:.12,ua:.15,dp:.05,ev:.25,em:.25,mg:.15,rr:.25,ap2:.2,py:.08,sr:.15,ct:.1};
+const DW={pl:3,be:4,fe:4,ig:1.5,mo:3,r1:.8,db:2.5};
+const DT={stage:2.2,router:.8,gate:1.2,test:1.5,loop:2.5,store:1.5,metric:1.5};
+const FK=new Set(['pl','be']),JN=new Set(['ig']),CC={small:'#4aa3ff',new:'#36d399',risk:'#ff5d73'};
+let N={},E=[],HL=[],act=new Set(),tk=[],pu=[],spw=0,st={done:0,rw:0},gid=0,grp={};
+const mkB=b=>({id:b[0],ar:b[1],en:EN[b[0]]||b[2],t:b[3],h:b[4],c:b[5],r:b[6],d:b[7],s:b[8].split('|'),f:b[9],k:b[10],ref:(STD[b[0]]||[])[3]||'',std:STD[b[0]]});
+const mkP=(a,p,rk,j)=>({id:a[0],ar:a[1],en:EN[a[0]]||a[2],t:a[3],h:4,c:j,r:rk,d:a[4],s:a[5].split('|'),f:a[6],k:0,ref:(STD[a[0]]||[])[3]||'',std:STD[a[0]],pk:p});
+function build(){N={};E=E0.map(e=>e.slice());B.forEach(b=>N[b[0]]=mkB(b));let rk=0;
+ PK.forEach(p=>{if(!act.has(p.id))return;(p.cut||[]).forEach(c=>{E=E.filter(e=>!(e[0]==c[0]&&e[1]==c[1]))});
+  p.N.forEach((a,j)=>{N[a[0]]=mkP(a,p,rk,j)});p.E.forEach(e=>E.push(e.slice()));if(p.fn)E=p.fn(E);rk++});
+ const rows=[2,2,2,2,Math.max(rk,1)],tops=[];let y=60;
+ for(let h=0;h<5;h++){tops[h]=y;y+=(rows[h]-1)*ROW+RH+16+HG+36}
+ HL=[0,1,2,3,4].filter(h=>h<4||rk).map(h=>({h,nm:HN[h],y0:tops[h]-36,y1:tops[h]+(rows[h]-1)*ROW+RH+16}));
+ Object.values(N).forEach(n=>{n.wx=-n.c*CW;n.wy=tops[n.h]+n.r*ROW+RH/2;n.sub=parseSub(n.id)});
+ tk=[];pu=[];grp={};st={done:0,rw:0};route();setMain()}
+function route(){let fl=0,bl=0;const L=-6*CW-RW/2-46,R=RW/2+46;
+ const blocked=(a,b)=>Object.values(N).some(n=>n!==a&&n!==b&&Math.abs(n.wx-a.wx)<5&&n.wy>Math.min(a.wy,b.wy)+5&&n.wy<Math.max(a.wy,b.wy)-5);
+ E.forEach((e,i)=>{const a=N[e[0]],b=N[e[1]],o=((i*7)%9-4)*3,bk=e[3]=='b',d=b.wy>a.wy?1:-1;let p;
+  if(Math.abs(a.wy-b.wy)<5){
+   if(Math.abs(a.wx-b.wx)<=CW*1.01){const h=b.wx<a.wx?-1:1,v=bk?18:0;p=[[a.wx+h*RW/2,a.wy+v],[b.wx-h*RW/2,b.wy+v]]}
+   else{const ya=a.wy+ROW/2+o;p=[[a.wx,a.wy+RH/2],[a.wx,ya],[b.wx,ya],[b.wx,b.wy+RH/2]]}}
+  else{const ya=a.wy+d*ROW/2+o,yb=b.wy-d*ROW/2+o,s=[a.wx,a.wy+d*RH/2],t=[b.wx,b.wy-d*RH/2];
+   if(Math.abs(a.wx-b.wx)<5&&!blocked(a,b))p=[s,t];
+   else if(Math.abs(a.wy-b.wy)<=ROW*1.01)p=[s,[a.wx,ya],[b.wx,ya],t];
+   else{const lx=bk?R+14*bl++:L-14*fl++;p=[s,[a.wx,ya],[lx,ya],[lx,yb],[b.wx,yb],t]}}
+  e.p=p;e.sg=[];e.len=0;for(let k=1;k<p.length;k++){const l=Math.hypot(p[k][0]-p[k-1][0],p[k][1]-p[k-1][1]);e.sg.push(l);e.len+=l}})}
+function at(e,d){let k=0;while(k<e.sg.length-1&&d>e.sg[k]){d-=e.sg[k];k++}
+ const a=e.p[k],b=e.p[k+1],l=e.sg[k]||1,t=Math.min(1,Math.max(0,d/l));return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,(b[0]-a[0])/l,(b[1]-a[1])/l]}
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const dwell=n=>(DW[n.id]||DT[n.t])*(.7+Math.random()*.6);
+function pick(l,t,n){if(!l.length)return null;
+ if(n.id=='r1'){const m={small:'pl',risk:'rv',new:'rq'}[t.c],e=l.find(e=>e[1]==m);if(e)return e}
+ let s=0;l.forEach(e=>s+=e[4]||1);let r=Math.random()*s;for(const e of l){r-=e[4]||1;if(r<=0)return e}return l[0]}
+function leave(t){const n=N[t.n],o=E.filter(e=>e[0]==t.n),fw=o.filter(e=>!e[3]),bk=o.filter(e=>e[3]=='b');
+ o.filter(e=>e[3]=='s').forEach(e=>pu.push({e,d:0}));
+ if(FK.has(n.id)&&fw.length>1){const g=++gid,base=t.g;grp[g]={n:fw.length,a:0};
+  fw.forEach((e,i)=>{const q=i?{...t}:t;q.g=[...base,g];q.e=e;q.d=0;if(i)tk.push(q)});return}
+ let e;const pf=PF[n.id];
+ if(t.fl){t.r++;st.rw++;e=pick(bk,t,n)}
+ else if(t.nx&&fw.includes(t.nx))e=t.nx;
+ else e=pick(pf===undefined&&bk.length?fw.concat(bk):(fw.length?fw:bk),t,n);
+ t.fl=false;t.nx=null;
+ if(!e){t.dead=1;st.done++;return}t.e=e;t.d=0}
+function enter(t,b){t.n=b;t.e=null;const n=N[b],o=E.filter(e=>e[0]==b),fw=o.filter(e=>!e[3]),bk=o.filter(e=>e[3]=='b'),pf=PF[b];
+ t.fl=!!(bk.length&&pf!==undefined&&Math.random()<pf*Math.pow(.5,t.r));t.nx=null;t.ni=-1;
+ if(!t.fl&&pf===undefined&&!FK.has(b)&&fw.length>1){const e=pick(fw,t,n);t.nx=e;t.ni=fw.indexOf(e)}
+ t.ip=subWalk(n,t);t.w=t.w0=Math.max(1.2,t.ip.length*.5*(.7+Math.random()*.6))}
+function subWalk(n,t){const S=n.sub;if(!S)return[];const out={};S.e.forEach(e=>{(out[e.a]=out[e.a]||[]).push(e)});
+ const path=[],lp={};let cur=S.src[0],ni=t.ni,g=0;
+ while(cur&&g++<26){path.push(cur);const nd=S.nd[cur],o=out[cur]||[],fw=o.filter(e=>!e.back),bk=o.filter(e=>e.back);let e=null;
+  if(!fw.length){if(bk.length&&(lp[cur]=(lp[cur]||0)+1)<2)e=bk[0]}
+  else if(nd.k=='o')e=t.fl?(fw[1]||fw[0]):fw[0];
+  else if(nd.k=='d'&&fw.length+bk.length>1){
+   if(ni>=0&&fw.length>1){e=fw[Math.min(ni,fw.length-1)];ni=-1}
+   else{e=fw[0];const alt=fw.slice(1).concat(bk);
+    if(t.fl&&S.o&&!S.rc[e.b].has(S.o)){const r=fw.find(x=>S.rc[x.b].has(S.o));if(r)e=r}
+    else if(alt.length&&Math.random()<.2){const a=alt[Math.floor(Math.random()*alt.length)];if(!a.back||(lp[cur]=(lp[cur]||0)+1)<2)e=a}}}
+  else e=fw[0];
+  cur=e?e.b:null}
+ return path}
+function arrive(t){const e=t.e,b=e[1];t.n=b;t.e=null;
+ while(t.g.length&&JN.has(b)){const g=t.g[t.g.length-1],G=grp[g];if(!G)break;G.a++;if(G.a<G.n){t.dead=1;return}delete grp[g];t.g.pop()}
+ if(b=='in'&&e[3]=='b'){t.c=rnd(['small','new']);t.r=0}
+ enter(t,b)}
+function simStep(dt){spw+=dt;
+ if(spw>3.2&&tk.length<7){spw=0;const r=Math.random();tk.push({c:r<.35?'small':r<.9?'new':'risk',n:'in',e:null,d:0,w:3,w0:3,r:0,g:[]});enter(tk[tk.length-1],'in')}
+ tk.forEach(t=>{if(t.dead)return;if(t.e){t.d+=90*dt;if(t.d>=t.e.len)arrive(t)}else{t.w-=dt;if(t.w<=0)leave(t)}});
+ tk=tk.filter(t=>!t.dead);pu.forEach(p=>p.d+=130*dt);pu=pu.filter(p=>p.d<p.e.len)}
+//3D
+const EYE=44,NEAR=4,WH=80,WT=4,DR=22,PR=10;
+const BH={stage:80,router:108,gate:92,loop:80,store:56,test:64,metric:64};
+const hexc=c=>{c=(c||'').trim();return c[0]=='#'&&c.length>=7?[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)):[10,20,40]};
+const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t),rgb=a=>`rgb(${Math.max(0,Math.min(255,a[0]))|0},${Math.max(0,Math.min(255,a[1]))|0},${Math.max(0,Math.min(255,a[2]))|0})`;
+const CRGB={},CCR={};Object.keys(C).forEach(k=>CRGB[k]=hexc(C[k]));Object.keys(CC).forEach(k=>CCR[k]=hexc(CC[k]));
+let cam={x:-690,y:700,z:900,yaw:0,pit:.95},VW=1000,VH=700,fov=.96,FF=700,BR=[1,0,0],BU=[0,1,0],BF=[0,0,-1];
+let colBG=[10,20,40],colPN=[15,28,56],colTX=[230,238,252],colMU=[143,163,199];
+let PL=[],LB=[],mode='orbit',selId=null,MP=[];
+function setMain(){const p=mainPath();p.forEach((id,i)=>{const n=N[id];n.ein=i?E.find(e=>e[0]==p[i-1]&&e[1]==id&&!e[3]):null;n.eout=i<p.length-1?E.find(e=>e[0]==id&&e[1]==p[i+1]&&!e[3]):null;n._l=null});MP=p}
+function basis(){const c=Math.cos(cam.yaw),s=Math.sin(cam.yaw),cp=Math.cos(cam.pit),sp=Math.sin(cam.pit);
+ BF=[s*cp,-sp,-c*cp];BR=[c,0,s];BU=[s*sp,cp,-c*sp];FF=VH/2/Math.tan(fov/2)}
+const tc=p=>{const x=p[0]-cam.x,y=p[1]-cam.y,z=p[2]-cam.z;return[x*BR[0]+y*BR[1]+z*BR[2],x*BU[0]+y*BU[1]+z*BU[2],x*BF[0]+y*BF[1]+z*BF[2]]};
+function clip(q){const o=[];for(let i=0;i<q.length;i++){const a=q[i],b=q[(i+1)%q.length],ia=a[2]>=NEAR,ib=b[2]>=NEAR;
+ if(ia)o.push(a);if(ia!==ib){const t=(NEAR-a[2])/(b[2]-a[2]);o.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,NEAR])}}return o}
+function poly(p,c,l,line,w){const q=p.map(tc);let z=0;q.forEach(a=>z+=a[2]);z/=q.length;const k=clip(q);if(k.length<3)return;
+ const fog=Math.min(.75,Math.max(0,(z-600)/3500));
+ PL.push({s:k.map(a=>[VW/2+a[0]/a[2]*FF,VH/2-a[1]/a[2]*FF]),z,l,f:c?rgb(mix(c,colBG,fog)):null,k:line||null,w:w||1})}
+const quad=(y,x0,z0,x1,z1,c,l)=>poly([[x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1]],c,l,null);
+function box(x0,y0,z0,x1,y1,z1,c,o){o=o||{};const L=o.l||3,F=[
+ [[0,1,0],[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],1,!o.noTop],
+ [[0,0,-1],[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]],.74,1],
+ [[0,0,1],[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],.88,1],
+ [[-1,0,0],[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],.62,1],
+ [[1,0,0],[[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],.8,1]];
+ F.forEach(([n,v,sh,on])=>{if(!on)return;const a=v[0];if((cam.x-a[0])*n[0]+(cam.y-a[1])*n[1]+(cam.z-a[2])*n[2]<=0)return;
+  poly(v,c.map(t=>t*sh),L,o.line===false?null:'rgba(0,0,0,.3)')})}
+function tri(x,z,dx,dz,s,c){const nx=-dz,nz=dx;poly([[x+dx*s*.5,2,z+dz*s*.5],[x-dx*s*.5+nx*s*.55,2,z-dz*s*.5+nz*s*.55],[x-dx*s*.5-nx*s*.55,2,z-dz*s*.5-nz*s*.55]],c,2,null)}
+function belt(e){const k=e[3],w=k=='s'?3:9,y=1.6,c=k=='s'?[34,211,238]:k=='b'?[255,176,32]:mix(colMU,colBG,.35);
+ for(let i=1;i<e.p.length;i++){const a=e.p[i-1],b=e.p[i],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1,nx=-dz/l*w/2,nz=dx/l*w/2;
+  poly([[a[0]+nx,y,a[1]+nz],[b[0]+nx,y,b[1]+nz],[b[0]-nx,y,b[1]-nz],[a[0]-nx,y,a[1]-nz]],c,2,null)}
+ if(k!='s'){const cc=k=='b'?[255,225,150]:colTX;const sp=cam.y>900?92:46;for(let d=24;d<e.len-14;d+=sp){const[x,z,dx,dz]=at(e,d);tri(x,z,dx,dz,sp>46?9:6,cc)}}
+ const q=e.p[e.p.length-1],r=e.p[e.p.length-2],l=Math.hypot(q[0]-r[0],q[1]-r[1])||1;
+ tri(q[0],q[1],(q[0]-r[0])/l,(q[1]-r[1])/l,10,k=='s'?[34,211,238]:k=='b'?[255,176,32]:colMU)}
+function lineOf(n){if(n._l)return n._l;const pre=n.ein||E.find(e=>e[1]==n.id&&!e[3]),po=n.eout||E.find(e=>e[0]==n.id&&!e[3]);
+ const D0=pre?pre.p[pre.p.length-1]:[n.wx+RW/2,n.wy],D1=po?po.p[0]:[n.wx-RW/2,n.wy];
+ const inw=p=>{const dx=n.wx-p[0],dz=n.wy-p[1],l=Math.hypot(dx,dz)||1;return[p[0]+dx/l*30,p[1]+dz/l*30]};
+ const r={D0,D1,A:inw(D0),B:inw(D1)};if(Math.hypot(r.A[0]-r.B[0],r.A[1]-r.B[1])<120){r.A=[n.wx+RW/2-46,n.wy];r.B=[n.wx-RW/2+46,n.wy]}return n._l=r}
+function itemsOf(n){const k=n.k||(n.t=='loop'?[n.s.length-1,'شرط التوقف',0]:null),it=[];
+ if(n.t=='router')n.s.forEach((s,i)=>it.push([i==2?'d':'b',s]));
+ else if(n.t=='gate')n.s.forEach((s,i)=>it.push([i==1?'d':'b',s]));
+ else n.s.forEach((s,i)=>{it.push(['b',s]);if(k&&k[0]==i)it.push(['d',k[1]])});return it}
+function wallsOf(n){if(n.w)return n.w;const x0=n.wx-RW/2,x1=n.wx+RW/2,z0=n.wy-RH/2,z1=n.wy+RH/2,D={N:[],S:[],W:[],E:[]};
+ E.forEach(e=>{if(e[3]=='s')return;[e[0]==n.id?e.p[0]:null,e[1]==n.id?e.p[e.p.length-1]:null].forEach(p=>{if(!p)return;
+  if(Math.abs(p[1]-z0)<2)D.N.push(p[0]);else if(Math.abs(p[1]-z1)<2)D.S.push(p[0]);else if(Math.abs(p[0]-x0)<2)D.W.push(p[1]);else if(Math.abs(p[0]-x1)<2)D.E.push(p[1])})});
+ const seg=(a,b,ds)=>{let r=[[a,b]];ds.forEach(c=>{r=r.flatMap(([s,e])=>c+DR<=s||c-DR>=e?[[s,e]]:[[s,Math.min(e,c-DR)],[Math.max(s,c+DR),e]].filter(q=>q[1]-q[0]>1))});
+  return r.flatMap(([s,e])=>{const k=Math.ceil((e-s)/48),o=[];for(let i=0;i<k;i++)o.push([s+(e-s)*i/k,s+(e-s)*(i+1)/k]);return o})};
+ return n.w=[...seg(x0,x1,D.N).map(([a,b])=>[a,z0,b,z0+WT]),...seg(x0,x1,D.S).map(([a,b])=>[a,z1-WT,b,z1]),...seg(z0,z1,D.W).map(([a,b])=>[x0,a,x0+WT,b]),...seg(z0,z1,D.E).map(([a,b])=>[x1-WT,a,x1,b])]}
+function isHollow(n,px,pz){if(mode=='orbit'||mode=='top')return n.id==selId;const x=px===undefined?cam.x:px,z=pz===undefined?cam.z:pz;
+ return x>n.wx-RW/2-70&&x<n.wx+RW/2+70&&z>n.wy-RH/2-70&&z<n.wy+RH/2+70}
+function aabbs(px,pz){const L=[];Object.values(N).forEach(n=>{if(isHollow(n,px,pz))wallsOf(n).forEach(w=>L.push(w));else L.push([n.wx-RW/2,n.wy-RH/2,n.wx+RW/2,n.wy+RH/2])});return L}
+function move(px,pz,dx,dz){let x=px+dx,z=pz+dz;aabbs(px,pz).forEach(([x0,z0,x1,z1])=>{const qx=Math.max(x0,Math.min(x,x1)),qz=Math.max(z0,Math.min(z,z1)),ex=x-qx,ez=z-qz,d=Math.hypot(ex,ez);
+ if(d<PR){if(d>.001){x=qx+ex/d*PR;z=qz+ez/d*PR}else{const m=[x-x0,x1-x,z-z0,z1-z],i=m.indexOf(Math.min(...m));if(i==0)x=x0-PR;else if(i==1)x=x1+PR;else if(i==2)z=z0-PR;else z=z1+PR}}});return[x,z]}
+function octa(x,y,z,r,c){const T=[x,y+r*1.1,z],Bm=[x,y-r*1.1,z],P=[[x+r,y,z],[x,y,z+r],[x-r,y,z],[x,y,z-r]];
+ for(let i=0;i<4;i++){const a=P[i],b=P[(i+1)%4];poly([T,a,b],c.map(v=>v*(i%2?.8:1)),3,'rgba(0,0,0,.3)');poly([Bm,b,a],c.map(v=>v*.55),3,'rgba(0,0,0,.3)')}}
+function subPos(n){if(n._sp)return n._sp;const S=n.sub,ln=lineOf(n),dx=ln.D1[0]-ln.D0[0],dir=Math.abs(dx)>40?Math.sign(dx):-1,sp=Math.min(RH-70,100),xs=n.wx-dir*(RW/2-38),xe=n.wx+dir*(RW/2-38),P={};
+ n._dir=dir;S.order.forEach(k=>{const[u,v]=S.pos[k];P[k]=[xs+(xe-xs)*u,n.wy+(v-.5)*sp]});return n._sp=P}
+function subTok(n,t){const S=n.sub;if(!S||!t.ip||!t.ip.length){const l=lineOf(n);return[l.A[0],l.A[1],14]}const P=subPos(n),m=t.ip.length,p=Math.min(.999,Math.max(0,1-t.w/(t.w0||1)))*m,i=Math.floor(p),f=p-i,a=P[t.ip[i]],b=P[t.ip[Math.min(i+1,m-1)]],g=f<.7?0:(f-.7)/.3;
+ return[a[0]+(b[0]-a[0])*g,a[1]+(b[1]-a[1])*g,f<.7?14+Math.sin(f*20)*1.5:12]}
+function interior(n){const S=n.sub;LB.push({p:[n.wx,WH-8,n.wy],t:n.ar+' · '+n.en,s:6,c:colMU,min:11,max:20,maxz:(mode=='orbit'||mode=='top')?900:320});if(!S)return;
+ const ln=lineOf(n),P=subPos(n),c=CRGB[n.t],mz=(mode=='orbit'||mode=='top')?900:420,bc=mix(colMU,colBG,.3),amb=[255,176,32];
+ const strip=(a,b,w,cl,y)=>{const dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1,nx=-dz/l*w/2,nz=dx/l*w/2;poly([[a[0]+nx,y,a[1]+nz],[b[0]+nx,y,b[1]+nz],[b[0]-nx,y,b[1]-nz],[a[0]-nx,y,a[1]-nz]],cl,2,null)};
+ const lsh=(d,p)=>{const top=Math.abs(d[1]-n.wy)>RH/2-4,m=top?[d[0],p[1]]:[p[0],d[1]];strip(d,m,4,bc,1.2);strip(m,p,4,bc,1.2)};S.src.forEach(k=>lsh(ln.D0,P[k]));S.snk.forEach(k=>lsh(ln.D1,P[k]));
+ S.e.forEach(e=>{const a=P[e.a],b=P[e.b],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1,ux=dx/l,uz=dz/l,off=e.back?9:0,ox=-uz*off,oz=ux*off,a2=[a[0]+ox,a[1]+oz],b2=[b[0]+ox,b[1]+oz];
+  strip(a2,b2,e.back?2.2:3,e.back?amb:bc,1.4);tri(b2[0]-ux*10,b2[1]-uz*10,ux,uz,6,e.back?amb:colTX);
+  if(e.l&&S.nd[e.a].k!='s')LB.push({p:[(a2[0]+b2[0])/2,6,(a2[1]+b2[1])/2],t:e.l,s:1.8,c:colMU,min:9,max:14,maxz:mz*.7})});
+ S.order.forEach(k=>{const nd=S.nd[k],x=P[k][0],z=P[k][1],dd=nd.k=='d'||nd.k=='o';
+  if(dd)octa(x,18,z,8,nd.k=='o'?[255,93,115]:c);
+  else if(nd.k=='x'){box(x-9,0,z-6,x+9,3,z+6,c);box(x-8,3,z-5,x+8,6,z+5,mix(c,colTX,.3))}
+  else if(nd.k=='t'){box(x-7,0,z-7,x+7,16,z+7,c);box(x-2,16,z-2,x+2,24,z+2,[255,220,140])}
+  else box(x-7,0,z-7,x+7,10,z+7,c);
+  LB.push({p:[x,dd?34:nd.k=='t'?30:18,z],t:nd.ar,s:2.3,c:colTX,w:38,min:10,maxz:mz});
+  LB.push({p:[x,dd?25:nd.k=='t'?22:10,z],t:nd.en,s:1.7,c:colMU,w:38,min:8,max:13,maxz:mz*.6})})}
+function room3(n){const x0=n.wx-RW/2,x1=n.wx+RW/2,z0=n.wy-RH/2,z1=n.wy+RH/2,c=CRGB[n.t],h=BH[n.t],hol=isHollow(n);
+ quad(.5,x0,z0,x1,z1,mix(c,colBG,hol?.42:.6),1);
+ if(hol){wallsOf(n).forEach(w=>box(w[0],0,w[1],w[2],WH,w[3],mix(c,colTX,.2),{noTop:0}));interior(n)}
+ else{let roof=mix(c,colTX,.18);if(n.pk)roof=mix(roof,hexc(n.pk.c),.5);box(x0,0,z0,x1,h,z1,c,{noTop:1});quad(h,x0,z0,x1,z1,roof,3);
+  if(n.t=='router'){box(n.wx-10,h,n.wy-10,n.wx+10,h+14,n.wy+10,c)}
+  if(n.t=='gate'){box(x0+8,h,n.wy-3,x0+14,h+16,n.wy+3,[255,93,115]);box(x1-14,h,n.wy-3,x1-8,h+16,n.wy+3,[255,93,115])}
+  const mz=(mode=='orbit'||mode=='top')?1e9:380;LB.push({p:[n.wx,h+24,n.wy],t:GL[n.t]+' '+n.ar,s:22,c:colTX,w:RW-14,min:8,max:26,maxz:mz});LB.push({p:[n.wx,h+9,n.wy],t:n.en,s:14,c:colMU,w:RW-14,min:7,max:15,maxz:mz});
+  let i=0;tk.forEach(t=>{if(!t.e&&t.n==n.id&&i<6){LB.push({dot:1,p:[x1-14-i*12,h+3,z1-12],c:rgb(CCR[t.c]),r:3.6,maxz:1e9});i++}})}}
+function scene(){PL=[];LB=[];basis();
+ const L0=-6*CW-RW/2-30,R0=RW/2+30,hl=mix(colBG,colTX,.07),pm=mix(colMU,colBG,.35);
+ HL.forEach(h=>{quad(0,L0,h.y0,R0,h.y1,hl,0);
+  [[L0,h.y0,R0,h.y0+3],[L0,h.y1-3,R0,h.y1],[L0,h.y0,L0+3,h.y1],[R0-3,h.y0,R0,h.y1]].forEach(w=>{const lx=w[2]-w[0]>w[3]-w[1],n=Math.ceil(Math.max(w[2]-w[0],w[3]-w[1])/90);for(let i=0;i<n;i++){const f0=i/n,f1=(i+1)/n;box(lx?w[0]+(w[2]-w[0])*f0:w[0],0,lx?w[1]:w[1]+(w[3]-w[1])*f0,lx?w[0]+(w[2]-w[0])*f1:w[2],12,lx?w[3]:w[1]+(w[3]-w[1])*f1,pm,{line:false})}});
+  LB.push({p:[R0-90,14,h.y0+18],t:h.nm,s:40,c:colMU,min:9,max:30,maxz:1e9})});
+ E.forEach(belt);Object.values(N).forEach(room3);
+ tk.forEach(t=>{if(t.e){const[x,z]=at(t.e,t.d);box(x-3.5,2,z-3.5,x+3.5,9,z+3.5,CCR[t.c])}
+  else{const n=N[t.n];if(n&&isHollow(n)){const q=subTok(n,t);box(q[0]-3.5,q[2],q[1]-3.5,q[0]+3.5,q[2]+7,q[1]+3.5,CCR[t.c])}}});
+ pu.forEach(p=>{const[x,z]=at(p.e,p.d);box(x-2,2,z-2,x+2,6,z+2,[34,211,238])});
+ const s=N[selId];if(s){const h=isHollow(s)?WH:BH[s.t]+.5,x0=s.wx-RW/2,x1=s.wx+RW/2,z0=s.wy-RH/2,z1=s.wy+RH/2;poly([[x0,h,z0],[x1,h,z0],[x1,h,z1],[x0,h,z1]],null,4,'#ffffff',3)}}
+function pickAt(mx,my){let best=null,bz=1e9;basis();Object.values(N).forEach(n=>{const h=BH[n.t],q=[[n.wx-RW/2,h,n.wy-RH/2],[n.wx+RW/2,h,n.wy-RH/2],[n.wx+RW/2,h,n.wy+RH/2],[n.wx-RW/2,h,n.wy+RH/2]].map(tc);
+ if(q.some(a=>a[2]<NEAR))return;const s=q.map(a=>[VW/2+a[0]/a[2]*FF,VH/2-a[1]/a[2]*FF]);let ins=false;
+ for(let i=0,j=3;i<4;j=i++){if((s[i][1]>my)!=(s[j][1]>my)&&mx<(s[j][0]-s[i][0])*(my-s[i][1])/(s[j][1]-s[i][1])+s[i][0])ins=!ins}
+ const z=(q[0][2]+q[2][2])/2;if(ins&&z<bz){bz=z;best=n.id}});return best}
+function mainPath(){const rev={};E.forEach(e=>{if(!e[3])(rev[e[1]]=rev[e[1]]||[]).push(e[0])});const ok=new Set(['rt']),q=['rt'];
+ while(q.length){const x=q.pop();(rev[x]||[]).forEach(y=>{if(!ok.has(y)){ok.add(y);q.push(y)}})}
+ const p=['in'],sn=new Set(['in']);let n='in';
+ while(n!='rt'){const o=E.filter(e=>e[0]==n&&!e[3]&&ok.has(e[1])&&!sn.has(e[1]));if(!o.length)break;
+  const e=n=='r1'?(o.find(e=>e[1]=='rq')||o[0]):o.reduce((a,b)=>(b[4]||1)>(a[4]||1)?b:a);p.push(e[1]);sn.add(e[1]);n=e[1]}return p}
+const ANG=(a,b)=>{let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
+function buildTour(){const path=mainPath(),S=[],ST=[];
+ const look=(x,z,tx,tz,ty,say,sp)=>{const dx=tx-x,dz=tz-z;return{x,z,yaw:Math.atan2(dx,-dz),pit:Math.atan2(EYE-ty,Math.hypot(dx,dz)||1),say,sp}};
+ path.forEach((id,pi)=>{const n=N[id];n.ein=pi?E.find(e=>e[0]==path[pi-1]&&e[1]==id&&!e[3]):null;n.eout=pi<path.length-1?E.find(e=>e[0]==id&&e[1]==path[pi+1]&&!e[3]):null;n._l=null});
+ path.forEach((id,pi)=>{const n=N[id],ln=lineOf(n),it=itemsOf(n),su=E.filter(e=>e[0]==id&&e[3]!='s'),pre=E.filter(e=>e[1]==id&&e[3]!='s'),fw=su.filter(e=>!e[3]),bk=su.filter(e=>e[3]=='b'),nmo=l=>l.map(e=>'«'+N[e[1]].ar+'»').join(' و')||'—',nmi=l=>l.map(e=>'«'+N[e[0]].ar+'»').join(' و')||'—';
+  ST.push(S.length);
+  if(n.ein){const p=n.ein.p;for(let i=1;i<p.length;i++){const nx=i+1<p.length?p[i+1]:ln.A;S.push(look(p[i][0],p[i][1],nx[0],nx[1],14,null,130))}}
+  const fk=FK.has(id)&&fw.length>1,jn=JN.has(id);
+  let intro=`${pi?'نصل الآن إلى':'نبدأ من'} «${n.ar}». هي ${TN[n.t]} في خط العمل. ${n.d}.`;
+  if(pre.length&&pi)intro+=` تصلها الأعمال من ${nmi(pre)}.`;if(n.sub)intro+=` يدخلها: ${n.sub.ia}.`;
+  if(fk)intro+=` وهنا ينقسم العمل إلى مسارات متوازية: ${nmo(fw)}. وسنتبع أولها.`;
+  if(jn)intro+=' وهنا يلتقي المساران المتوازيان، ولا يمضي العمل حتى يصل كلاهما.';
+  S.push(look(ln.A[0],ln.A[1],ln.B[0],ln.B[1],14,intro,110));
+  const S2=n.sub;
+  if(S2){const P=subPos(n),ux=n._dir,uz=0,ll=1,ords=S2.order.slice().sort((a,b)=>S2.ly[a]-S2.ly[b]||S2.order.indexOf(a)-S2.order.indexOf(b)),main=new Set(),stk=[...S2.src];
+   while(stk.length){const k=stk.pop();if(main.has(k))continue;main.add(k);const o=S2.e.filter(e=>e.a==k&&!e.back);(S2.nd[k].k=='d'||S2.nd[k].k=='o'?o.slice(0,1):o).forEach(e=>stk.push(e.b))}
+   let first=true;ords.filter(k=>main.has(k)).forEach(k=>{const nd=S2.nd[k],p=P[k],o=S2.e.filter(e=>e.a==k),fwd=o.filter(e=>!e.back),bkd=o.filter(e=>e.back);let say;
+    if(nd.k=='x')say=`ويُنتج هنا: ${nd.ar}.`;
+    else if(nd.k=='t')say=`وهنا أداة أو تقنية: ${nd.ar}.`;
+    else if(nd.k=='d'||nd.k=='o')say=`وهنا ${nd.k=='o'?'قرار القبول':'قرار'}: ${nd.ar}`+fwd.map(e=>' '+(e.l=='نعم'?'فإن نعم مضى إلى':e.l=='لا'?'وإن لا فإلى':e.l?'وإن كانت الحالة «'+e.l+'» فإلى':'ثم إلى')+' «'+S2.nd[e.b].ar+'»').join('')+(bkd.length?`، وإن لم يتحقق عاد إلى «${S2.nd[bkd[0].b].ar}»`:'')+'.';
+    else{say=`${first?'أولًا':'ثم'}: ${nd.ar}.`;first=false}
+    const vx=Math.max(n.wx-RW/2+14,Math.min(n.wx+RW/2-14,p[0]-ux/ll*44)),vz=Math.max(n.wy-RH/2+14,Math.min(n.wy+RH/2-14,p[1]-uz/ll*44));
+    S.push(look(vx,vz,p[0],p[1],12,say,90))})}
+  let out=`ومنها يخرج العمل إلى ${nmo(fw)}.`;if(n.sub)out+=` ويخرج منها: ${n.sub.oa}.`;if(bk.length)out+=` وعند الفشل يرجع إلى ${nmo(bk)}.`;
+  out+=` وأبرز ما يُفسد العمل هنا: ${n.f}.`;if(n.ref)out+=` ومقابلها الدولي: ${n.ref}.`;out+=` وتُختبر هذه الغرفة هكذا: ${TT[n.t]}.`;
+  if(pi==path.length-1)out+=' وبهذا تنتهي الجولة، وقد رأيت المسار كاملًا من استقبال الطلب حتى استخلاص الدروس.';
+  S.push(look(ln.B[0],ln.B[1],ln.D1[0],ln.D1[1],14,out,90));
+  if(n.eout)S.push(look(n.eout.p[0][0],n.eout.p[0][1],n.eout.p[1][0],n.eout.p[1][1],14,null,110))});
+ return{S,ST,i:0,ps:false,path,tok:0}}
+//VOICE
+const LEX=[['CRISP-DM','كريسب دي إم'],['ADKAR','أدكار'],['End-to-End','إند تو إند'],['OpenAPI','أوبن إيه بي آي'],['ISTQB','آي إس تي كيو بي'],['PMBOK','بي إم بوك'],['IEEE','آي تريبل إي'],['NIST','نيست'],['SSDF','إس إس دي إف'],['PCI DSS','بي سي آي دي إس إس'],['ASVS','إيه إس في إس'],['Scrum','سكرم'],['SRE','إس آر إي'],['ReAct','رياكت'],['RAG','راغ'],['BPE','بي بي إي'],['E2E','إي تو إي'],['Blue-Green','بلو غرين'],['Code Review','كود ريفيو'],['Test Pyramid','تست بيراميد'],['Trade-offs','تريد أوفس'],['Retrospective','ريتروسبكتيف'],['Rollback','رول باك'],['Canary','كناري'],['Agile','أجايل'],['OWASP','أواسب'],['ITIL','آي تِل'],['DORA','دورا'],['SAST','ساست'],['SLO','إس إل أو'],['UAT','يو إي تي'],['WBS','دبليو بي إس'],['ADR','إيه دي آر'],['ISO','آيزو'],['IEC','آي إي سي'],['CI','سي آي'],['OCR','أو سي آر'],['API','إيه بي آي'],['SaaS','ساس'],['Top 10','العشرة الأولى']].sort((a,b)=>b[0].length-a[0].length);
+const NU=['صفر','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'],NT=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'],NH=['','مئة','مئتان','ثلاثمئة','أربعمئة','خمسمئة','ستمئة','سبعمئة','ثمانمئة','تسعمئة'];
+function numAr(n){if(n<20)return NU[n];if(n<100){const o=n%10,t=NT[Math.floor(n/10)];return o?NU[o]+' و'+t:t}
+ if(n<1000){const r=n%100,h=NH[Math.floor(n/100)];return r?h+' و'+numAr(r):h}
+ if(n<100000){const k=Math.floor(n/1000),r=n%1000,ks=k==1?'ألف':k==2?'ألفان':k<=10?NU[k]+' آلاف':numAr(k)+' ألف';return r?ks+' و'+numAr(r):ks}return String(n)}
+function prep(t,eng){let s=t.replace(/\s*\(([A-Za-z0-9 &\/\-\.]+)\)/g,(m,i)=>/^[A-Z0-9 \/\.&]+$/.test(i.trim())?' '+i:'');
+ LEX.forEach(([k,v])=>{s=s.replace(new RegExp('(^|[^A-Za-z])'+k.replace(/[.*+?^${}()|[\]\\-]/g,'\\$&')+'(?![A-Za-z])','g'),(m,p)=>p+v)});
+ s=s.replace(/\d+/g,m=>numAr(+m)).replace(/[«»]/g,'').replace(/[←↺]/g,' إلى ').replace(/[\/&]/g,' ').replace(/\s*:\s*/g,'، ').replace(/\s+/g,' ').trim();
+ if(eng=='web')s=s.replace(/[\u064B\u064C\u064D]/g,'');return s}
+function fnv(s){const b=new TextEncoder().encode(s);let h=0x811c9dc5;for(const x of b){h^=x;h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0')}
+//PLAN
+const clD=(x,m)=>String(x==null?'':x).replace(/[<&"`\\\u0000-\u001f]/g,' ').replace(/\s+/g,' ').trim().slice(0,m||300);
+const cl=(x,m)=>String(x==null?'':x).replace(/[<>&"`\\\u0000-\u001f]/g,' ').replace(/\s+/g,' ').trim().slice(0,m||300);
+function valSub(sub){if(!sub||typeof sub.n!=='string'||typeof sub.e!=='string')return'السير الداخلي ناقص';const nd={},order=[];
+ for(const s of sub.n.split(';')){const i=s.indexOf(':');if(i<1)return'عقدة غير صالحة';const k=s.slice(0,i),p=s.slice(i+1).split('|');
+  if(!/^[a-z]$/.test(k)||nd[k])return'مفتاح عقدة مكرر أو غير صالح: '+k;if(p.length!==3||!p[0].trim()||!p[1].trim()||p[2].length!==1||!'sdtxo'.includes(p[2]))return'عقدة غير صالحة: '+k;nd[k]={k:p[2]};order.push(k)}
+ if(order.length<3||order.length>10)return'عدد العقد يجب أن يكون بين 3 و10';const e=[];
+ for(let x of sub.e.split(',')){let back=false;if(x.endsWith('!')){back=true;x=x.slice(0,-1)}const g=x.indexOf('>');if(g<1)return'وصلة غير صالحة';const a=x.slice(0,g);let r=x.slice(g+1);const c=r.indexOf(':');if(c>=0)r=r.slice(0,c);
+  if(!nd[a]||!nd[r])return'وصلة تشير إلى عقدة غير موجودة';e.push({a,b:r,back})}
+ const ly={};order.forEach(k=>ly[k]=0);for(let it=0;it<order.length+2;it++)e.forEach(x=>{if(!x.back&&ly[x.b]<ly[x.a]+1)ly[x.b]=ly[x.a]+1});
+ if(Math.max(...Object.values(ly))>=order.length)return'دورة أمامية في السير';
+ for(const k of order)if(!e.some(x=>x.a==k||x.b==k))return'عقدة معزولة: '+k;
+ const hasIn={};e.forEach(x=>{if(!x.back)hasIn[x.b]=1});const src=order.filter(k=>!hasIn[k]);if(!src.length)return'لا مصدر للسير';if(!order.some(k=>!e.some(x=>x.a==k)))return'لا مخرج للسير';
+ const seen=new Set(),st=[...src];while(st.length){const a=st.pop();if(seen.has(a))continue;seen.add(a);e.forEach(x=>{if(!x.back&&x.a==a)st.push(x.b)})}if(seen.size!==order.length)return'عقدة لا يمكن الوصول إليها';
+ for(const k of order){const out=e.filter(x=>x.a==k),fw=out.filter(x=>!x.back);if(nd[k].k=='d'&&out.length<2)return'قرار بلا مخرجين';if(nd[k].k=='o'&&fw.length!==2)return'قرار النجاح والفشل يلزمه مخرجان أماميان بالضبط'}
+ const rows={};order.forEach(k=>rows[ly[k]]=(rows[ly[k]]||0)+1);if(Math.max(...Object.values(rows))>4)return'طبقة واسعة جدًا';return null}
+function planCore(plan){const ci=PK.findIndex(p=>p.id=='cust');if(ci>=0)PK.splice(ci,1);act.delete('cust');
+ (plan.packs||[]).forEach(k=>{if(PK.some(p=>p.id==k))act.add(k)});build();
+ const ids=new Set(Object.keys(N)),rooms=[],tuples=[];
+ (plan.custom_rooms||[]).slice(0,6).forEach(r=>{const id=String(r.id||'');
+  if(!/^x[a-z0-9]{1,5}$/.test(id)||ids.has(id))throw new Error('معرّف غرفة غير صالح: '+id);
+  if(!TN[r.type])throw new Error('نوع غير صالح: '+id);
+  const sub={i:cl(r.internal&&r.internal.i,120),o:cl(r.internal&&r.internal.o,120),n:clD(r.internal&&r.internal.n,1500).replace(/ ?; ?/g,';').replace(/ ?\| ?/g,'|'),e:clD(r.internal&&r.internal.e,800).replace(/ ?, ?/g,',')};
+  const er=valSub(sub);if(er)throw new Error(id+': '+er);
+  const after=String(r.after||'');if(!ids.has(after))throw new Error(id+': الغرفة السابقة غير موجودة: '+after);ids.add(id);
+  const std=r.std||{};let lv=['S','F','P','C'].includes(std.level)?std.level:'C';const term=cl(std.term,120),src=cl(std.source,200);if((lv=='S'||lv=='F')&&(!term||!src))lv='C';
+  const labels=sub.n.split(';').map(x=>x.slice(x.indexOf(':')+1).split('|')[0]);
+  const hasO=sub.n.split(';').some(x=>x.split('|')[2]=='o');
+  tuples.push([id,cl(r.ar,80)||id,cl(r.en,80)||id,r.type,cl(r.desc,300)||'غرفة مخصصة للمشروع',labels.slice(0,4).join('|'),'يحدده فريق المشروع']);
+  SUB[id]={i:sub.i,o:sub.o,n:sub.n,e:sub.e};delete SUB_P[id];EN[id]=cl(r.en,80)||id;
+  STD[id]=[lv,term||cl(r.en,80),src||'اقتراح غير موثّق مرجعيًا','اقتراح مخصص للمشروع غير موثّق مرجعيًا',false];
+  if(hasO)PF[id]=.12;rooms.push({id,after,hasO})});
+ const pk={id:'cust',n:cl(plan.title,50)||'مخصص',c:'#fbbf24',cut:[],N:tuples,E:[],fn:E=>{rooms.forEach(r=>{const i=E.findIndex(e=>e[0]==r.after&&!e[3]);if(i<0)return;const nx=E[i][1];E.splice(i,1,[r.after,r.id],[r.id,nx]);if(r.hasO)E.push([r.id,'db','فشل','b'])});return E}};
+ PK.push(pk);act.add('cust');build();
+ globalThis.PLAN={title:cl(plan.title,120),summary:cl(plan.summary,700),risks:(plan.risks||[]).slice(0,8).map(k=>({ar:cl(k.ar,200),mitigation:cl(k.mitigation,300),room:k.room&&N[k.room]?k.room:null}))};return rooms.length}
+//DOM
+const cv=$('#cv'),cx=cv.getContext('2d'),SD=$('#side');
+let W=0,H=0,dpr=1,col={},play=true,last=0,foc=null;
+function theme(){const s=getComputedStyle(document.documentElement);['bg','pn','tx','mu','bd'].forEach(k=>col[k]=s.getPropertyValue('--'+k).trim());colBG=hexc(col.bg);colPN=hexc(col.pn);colTX=hexc(col.tx);colMU=hexc(col.mu)}
+function resize(){dpr=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;VW=W;VH=H}
+const rr=(x,y,w,h,r)=>{cx.beginPath();cx.roundRect(x,y,w,h,r)};
+function wrap(t,mw,mx){const w=t.split(' '),L=[];let l='';w.forEach(x=>{const q=l?l+' '+x:x;if(cx.measureText(q).width>mw&&l){L.push(l);l=x}else l=q});if(l)L.push(l);return L.slice(0,mx)}
+const nm=(f,l)=>l.filter(e=>e[3]!='s').map(e=>N[e[0]==f.id?e[1]:e[0]].ar).join('، ')||'—';
+function impact(f){const pre=E.filter(e=>e[1]==f.id),su=E.filter(e=>e[0]==f.id),fw=su.filter(e=>!e[3]),bk=su.filter(e=>e[3]=='b');
+ return `تستقبل من ${nm(f,pre)}، وتسلّم مخرجها إلى ${nm(f,fw)}${bk.length?'، وعند الفشل تعيد العمل إلى '+nm(f,bk):''}. وإن اختلّت: ${f.f}.`}
+const dot=(x,y,r,c)=>{cx.beginPath();cx.arc(x,y,Math.max(2.5,r),0,7);cx.fillStyle=c;cx.fill();cx.strokeStyle='#fff';cx.lineWidth=1;cx.stroke()};
+
+function stage(a){const f=N[foc];if(!f||!f.sub)return;const S=f.sub;cx.globalAlpha=a;cx.fillStyle=col.bg;cx.fillRect(0,0,W,H);cx.direction='rtl';
+ const c=C[f.t];cx.textAlign='right';cx.fillStyle=col.tx;cx.font=`700 22px ${FONT}`;cx.fillText(f.ar,W-20,36);
+ cx.fillStyle=c;cx.font=`600 13px ${FONT}`;cx.fillText(`${GL[f.t]} ${TN[f.t]} · ${TNE[f.t]} · ${f.en}`,W-20,58);
+ if(f.pk){cx.textAlign='left';cx.fillStyle=f.pk.c;cx.fillText('ملحق: '+f.pk.n,20,58);cx.textAlign='right'}
+ cx.fillStyle=col.mu;cx.font=`13px ${FONT}`;if(H>480)wrap(f.d,W-40,1).forEach(t=>cx.fillText(t,W-20,82));
+ const T=H>480?122:76,A={x:20,y:T,w:W-40,h:H-T-44},PW=Math.min(120,A.w*.11),x0=A.x+PW+14,x1=A.x+A.w-PW-14;
+ const mr=Math.max(...Object.values(S.rows).map(r=>r.length)),bw=Math.max(66,Math.min(150,(x1-x0)/(S.L+.2)*.8)),bh=Math.max(32,Math.min(54,A.h/(mr+.6)*.72)),gap=S.L>1?(x1-x0-bw)/(S.L-1)-bw:40;
+ const P={};S.order.forEach(k=>{const[u,v]=S.pos[k];P[k]=[S.L>1?x1-bw/2-u*(x1-x0-bw):(x0+x1)/2,A.y+v*A.h]});
+ const hw=k=>S.nd[k].k=='d'||S.nd[k].k=='o'?bw*.62:bw/2,hh=k=>S.nd[k].k=='d'||S.nd[k].k=='o'?bh*.78:bh/2;
+ const arrow=(pts,cl,dash,lab,lx,ly)=>{cx.strokeStyle=cl;cx.fillStyle=cl;cx.lineWidth=1.6;cx.setLineDash(dash?[6,4]:[]);cx.beginPath();pts.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.stroke();cx.setLineDash([]);
+  const b=pts[pts.length-1],q=pts[pts.length-2],l=Math.hypot(b[0]-q[0],b[1]-q[1])||1,dx=(b[0]-q[0])/l*8,dy=(b[1]-q[1])/l*8;cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0]-dx-dy*.5,b[1]-dy+dx*.5);cx.lineTo(b[0]-dx+dy*.5,b[1]-dy-dx*.5);cx.closePath();cx.fill();
+  if(lab){cx.fillStyle=col.mu;cx.font=`11px ${FONT}`;cx.textAlign='center';cx.fillText(lab,lx,ly);cx.textAlign='right'}};
+ const port=(x,y,t)=>{cx.setLineDash([5,4]);cx.strokeStyle=c;cx.lineWidth=1.4;cx.fillStyle=col.pn;rr(x-PW/2,y-34,PW,68,8);cx.fill();cx.stroke();cx.setLineDash([]);cx.fillStyle=col.tx;cx.font=`12px ${FONT}`;cx.textAlign='center';const L=wrap(t,PW-12,4);L.forEach((s,i)=>cx.fillText(s,x,y+(i-(L.length-1)/2)*14+4));cx.textAlign='right'};
+ const py=A.y+A.h/2,pin=[A.x+A.w-PW/2,py],pout=[A.x+PW/2,py];
+ S.src.forEach(k=>{const b=P[k],mx=pin[0]-PW/2-(pin[0]-PW/2-(b[0]+hw(k)))/2;arrow([[pin[0]-PW/2,py],[mx,py],[mx,b[1]],[b[0]+hw(k),b[1]]],col.mu,0)});
+ S.snk.forEach(k=>{const b=P[k],mx=(b[0]-hw(k)+pout[0]+PW/2)/2;arrow([[b[0]-hw(k),b[1]],[mx,b[1]],[mx,py],[pout[0]+PW/2,py]],col.mu,0)});
+ let bi=0;S.e.forEach(e=>{const A1=P[e.a],B1=P[e.b],ha=hw(e.a),hb=hw(e.b);
+  if(e.back){const ty=A.y-4-(bi++%3)*7;arrow([[A1[0],A1[1]-hh(e.a)],[A1[0],ty],[B1[0],ty],[B1[0],B1[1]-hh(e.b)]],'#ffb020',1,e.l,(A1[0]+B1[0])/2,ty-3)}
+  else{const fail=S.nd[e.a].k=='o'&&S.e.filter(x=>x.a==e.a&&!x.back).indexOf(e)==1,mx=B1[0]+hb+gap/2,cl=fail?'#ff5d73':col.mu;
+   arrow([[A1[0]-ha,A1[1]],[mx,A1[1]],[mx,B1[1]],[B1[0]+hb,B1[1]]],cl,0,e.l,(A1[0]-ha+mx)/2,A1[1]-5)}});
+ S.order.forEach(k=>{const nd=S.nd[k],x=P[k][0],y=P[k][1],isd=nd.k=='d'||nd.k=='o',w2=hw(k),h2=hh(k);
+  cx.lineWidth=nd.k=='t'?2.6:1.6;cx.strokeStyle=nd.k=='o'?'#ff5d73':c;cx.fillStyle=col.pn;
+  if(isd){cx.beginPath();cx.moveTo(x,y-h2);cx.lineTo(x+w2,y);cx.lineTo(x,y+h2);cx.lineTo(x-w2,y);cx.closePath();cx.fill();cx.stroke()}
+  else if(nd.k=='x'){cx.beginPath();cx.moveTo(x-w2,y-h2);cx.lineTo(x+w2-10,y-h2);cx.lineTo(x+w2,y-h2+10);cx.lineTo(x+w2,y+h2);cx.lineTo(x-w2,y+h2);cx.closePath();cx.fill();cx.stroke()}
+  else{rr(x-w2,y-h2,w2*2,h2*2,8);cx.fill();cx.stroke();if(nd.k=='t'){rr(x-w2+4,y-h2+4,w2*2-8,h2*2-8,5);cx.lineWidth=.8;cx.stroke()}}
+  cx.fillStyle=col.tx;cx.textAlign='center';cx.font=`12px ${FONT}`;const L=wrap(nd.ar,isd?w2*1.25:w2*2-12,3);L.forEach((s,i)=>cx.fillText(s,x,y+(i-(L.length-1)/2)*14+4));
+  cx.fillStyle=col.mu;cx.font=`10px ${FONT}`;cx.direction='ltr';wrap(nd.en,w2*2+16,2).forEach((s,i)=>cx.fillText(s,x,y+h2+11+i*11));cx.direction='rtl';cx.textAlign='right'});
+ port(pin[0],pin[1],'يدخل: '+S.ia);port(pout[0],pout[1],'يخرج: '+S.oa);
+ cx.fillStyle=col.mu;cx.font=`11px ${FONT}`;cx.textAlign='left';cx.fillText('▭ خطوة   ⚙ أداة أو تقنية (إطار مزدوج)   ◇ قرار   ◈ قرار قبول (أحمر)   ▤ مخرج   - - ↺ رجوع',20,H-14);cx.textAlign='right';
+ cx.globalAlpha=1}
+const chip=n=>`<span class="ch" data-id="${n.id}" style="border-color:${n.pk?n.pk.c:C[n.t]}">${n.ar}</span>`;
+function stats(){const v=Object.values(N),c={};v.forEach(n=>c[n.t]=(c[n.t]||0)+1);
+ const q=(c.gate||0)+(c.test||0)+(c.metric||0),dens=Math.round(q/v.length*100),back=E.filter(e=>e[3]=='b').length,mx=Math.max(...Object.values(c)),add=v.filter(n=>n.pk);
+ SD.innerHTML=`<h2>لوحة القياس</h2><div class="kp"><div><b>${v.length}</b>غرفة</div><div><b>${E.length}</b>سير</div><div><b>${back}</b>إرجاع</div><div><b>${dens}%</b>كثافة الجودة</div></div><h3>أنواع الغرف</h3>`
+ +Object.keys(C).filter(t=>c[t]).map(t=>`<div class="br"><span>${TN[t]}</span><i style="width:${c[t]/mx*60}%;background:${C[t]}"></i><em>${GL[t]} ${c[t]}</em></div>`).join('')
+ +(add.length?`<h3>المضاف من الملحقات (${add.length})</h3>`+add.map(chip).join(''):'<p class="mu">اختر نوع مشروعك من الشريط العلوي لتُدمج ملحقاته في المخطط.</p>')
+ +`<h3>صدق المسميات</h3><p class="mu">كل غرفة تحمل اسمها الدولي ومصدرها ودرجة اعتمادها. أما ترتيبها في خط واحد وتفرّعه فتركيب لتوضيح التسلسل المعتاد؛ فالمعيار ISO/IEC/IEEE 12207 نفسه لا يفرض نموذج دورة حياة بعينه. وغير ممثَّل هنا: Configuration Management (إدارة الإعدادات) وInformation Management (إدارة المعلومات).</p><p><button id="stb">جدول المطابقة الدولية</button> <button id="exd">تصدير وثيقة العمل</button></p><h3>التجوال</h3><p class="mu">«مجسّم» للدوران حول الماكيت، «مسقط علوي» للمخطط الهندسي، «تجوّل حر» للمشي داخله بالأسهم أو WASD، و«جولة مرشدة» يشرح فيها المهندس خط العمل وأنت داخله.</p><p><button id="exl">تصدير نص السرد للتسجيل الصوتي</button></p><h3>كيف تُقرأ الحركة</h3><p class="mu">الأسهم الثابتة تبيّن اتجاه كل مسار. النقاط المتحركة هي طلبات عمل حقيقية الدور: <span style="color:${CC.small}">●</span> تعديل صغير، <span style="color:${CC.new}">●</span> جديد، <span style="color:${CC.risk}">●</span> عالي الخطورة. تقف في الغرفة مدة معالجتها، والروتر يختار فرعًا واحدًا بحسب نوع الطلب، والمسار البرتقالي المتقطع لا يُسلك إلا عند الفشل، والأزرق المنقط إشارات قياس لا عمل. المسارات المتوازية تنتظر بعضها عند التكامل.</p>`}
+function room(id){const n=N[id],su=E.filter(e=>e[0]==id),pre=E.filter(e=>e[1]==id);
+ SD.innerHTML=`<p><button id="eb">ادخل الغرفة</button> <button id="sb">المخطط التفصيلي</button></p><h2>${n.ar} <small>${n.en}</small></h2><p><span class="bg" style="background:${C[n.t]}">${TN[n.t]} · ${TNE[n.t]}</span>${n.pk?` <span class="bg" style="background:${n.pk.c}">ملحق: ${n.pk.n}</span>`:''}</p>`
+ +(n.std?`<h3>المطابقة الدولية</h3><p><span class="bg" style="background:${LV[n.std[0]][1]}">${LV[n.std[0]][0]}</span>${n.std[4]===false?' <span class="bg" style="background:#ff5d73">اقتراح غير موثّق مرجعيًا</span>':''}</p><p><b>${n.std[1]}</b></p><p class="mu">${n.std[2]}</p>`:'')+`<h3>وظيفتها</h3><p>${n.d}</p><h3>أثرها في المنظومة</h3><p>${impact(n)}</p>`
+ +`<h3>السير الداخلي: المكوّنات بالترتيب</h3>`+(n.sub?`<p class="mu">يدخلها: ${n.sub.ia}<br>يخرج منها: ${n.sub.oa}</p>`+n.sub.order.map((k,i)=>`<div class="st"><b>${i+1}</b><span>${n.sub.nd[k].ar}<span class="mu" dir="ltr" style="display:block;text-align:left">${n.sub.nd[k].en}</span></span></div>`).join(''):n.s.map((s,i)=>`<div class="st"><b>${i+1}</b>${s}</div>`).join(''))
+ +`<h3>تستقبل من</h3>${pre.map(e=>chip(N[e[0]])).join('')||'—'}<h3>${n.t=='router'?'قواعد التوزيع':'تُرسل إلى'}</h3>${su.map(e=>`<div>${e[2]?'<small class="mu">'+e[2]+'</small> ':''}${chip(N[e[1]])}${e[3]=='b'?' ↺':e[3]=='s'?' (إشارة قياس)':''}</div>`).join('')||'—'}`
+ +`<h3>حالات الإخفاق</h3><p>${n.f}</p><h3>اختبار الغرفة</h3><p>${TT[n.t]}</p>`}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let orb={yaw:0,pit:.95,dist:1800,tx:-690,tz:300},ply={x:0,z:0,yaw:0,pit:.1},tp={x:0,z:0,yaw:0,pit:.1},tour=null,keys={},soundOn=true,voice=null,AIDX={},curAudio=null,subTm=0;
+function fitOrb(){const y0=HL[0].y0,y1=HL[HL.length-1].y1,pw=6*CW+RW+160,ph=y1-y0+80,vf=fov,hf=2*Math.atan(Math.tan(vf/2)*W/H),top=mode=='top';
+ orb.tx=-3*CW;orb.tz=(y0+y1)/2;orb.dist=Math.max(pw/(2*Math.tan(hf/2)),ph/(2*Math.tan(vf/2)))*(top?1.05:1.3)}
+function desire(){if(mode=='walk')return{x:ply.x,y:EYE,z:ply.z,yaw:ply.yaw,pit:ply.pit};
+ if(mode=='tour')return{x:tp.x,y:EYE,z:tp.z,yaw:tp.yaw,pit:tp.pit};
+ const cp=Math.cos(orb.pit),sp=Math.sin(orb.pit),f=[Math.sin(orb.yaw)*cp,-sp,-Math.cos(orb.yaw)*cp];
+ return{x:orb.tx-f[0]*orb.dist,y:-f[1]*orb.dist,z:orb.tz-f[2]*orb.dist,yaw:orb.yaw,pit:orb.pit}}
+function showSub(t,ms){const e=$('#sub');e.textContent=t;e.hidden=false;clearTimeout(subTm);if(ms)subTm=setTimeout(()=>{e.hidden=true},ms)}
+const hideSub=()=>{$('#sub').hidden=true};
+function pickVoice(){if(!('speechSynthesis' in window))return;const vs=speechSynthesis.getVoices();let sv=null;try{sv=localStorage.getItem('vn')}catch(e){}
+ voice=vs.find(v=>v.name==sv)||vs.find(v=>/^ar/i.test(v.lang))||null}
+function stopSay(){if('speechSynthesis' in window)speechSynthesis.cancel();if(curAudio){curAudio.pause();curAudio=null}}
+function playFile(u,ok,bad,md){fetch(u).then(r=>{if(!r.ok)throw 0;return r.blob()}).then(b=>{const a=new Audio(URL.createObjectURL(b));curAudio=a;a.onloadedmetadata=()=>{if(md)md(a.duration)};a.onended=ok;a.onerror=bad;a.play().catch(bad)}).catch(bad)}
+const sentences=t=>{const o=[];let l='';t.split(/([.؟!])\s*/).forEach(p=>{if(/^[.؟!]$/.test(p)){l+=p;o.push(l);l=''}else l+=p});if(l.trim())o.push(l);return o.map(x=>x.trim()).filter(Boolean)};
+function webSay(s,fin){if(!voice||!('speechSynthesis' in window)){s.left=s.D=Math.max(2.5,s.say.length*.06);return}
+ const ch=sentences(prep(s.say,'web'));let i=0;
+ const nx=()=>{if(i>=ch.length)return fin();const u=new SpeechSynthesisUtterance(ch[i++]);u.voice=voice;u.lang=voice.lang;u.rate=.92;window._u=u;
+  u.onend=()=>setTimeout(nx,260);u.onerror=e=>{if(e.error!='canceled'&&e.error!='interrupted')fin()};speechSynthesis.speak(u)};
+ speechSynthesis.cancel();setTimeout(nx,90)}
+function chunksOf(t){const parts=[];t.split(/([.،؟!:])\s+/).forEach(p=>{if(/^[.،؟!:]$/.test(p)&&parts.length)parts[parts.length-1]+=p;else if(p.trim())parts.push(p)});
+ const o=[];parts.forEach(p=>{let l='';p.split(/\s+/).forEach(w=>{if(l&&(l+' '+w).length>54){o.push(l);l=w}else l=l?l+' '+w:w});if(l)o.push(l)});return o}
+function say(s){const id=fnv(s.say),tok=tour.tok,fin=()=>{if(tour&&tour.tok===tok)s.dn=1};s.ch=chunksOf(s.say);s.el=0;s.ci=-1;s.D=Math.max(2.5,s.say.length*.07);
+ if(!soundOn){s.left=s.D;return}
+ if(AIDX[id])return playFile(AIDX[id],fin,()=>webSay(s,fin),d=>{s.D=d});webSay(s,fin)}
+function tourStep(dt){const s=tour.S[tour.i];if(!s){showSub('انتهت الجولة. اضغط «مجسّم» للعودة أو ابدأ جولة جديدة.',6000);setMode('orbit');return}if(tour.ps)return;
+ const dx=s.x-tp.x,dz=s.z-tp.z,d=Math.hypot(dx,dz);
+ if(d>1){const m=Math.min(d,(s.sp||110)*dt);tp.x+=dx/d*m;tp.z+=dz/d*m}
+ const k=Math.min(1,dt*4);tp.yaw+=ANG(tp.yaw,s.yaw)*k;tp.pit+=(s.pit-tp.pit)*k;
+ if(d>1.5)return;if(!s.say){tour.i++;return}
+ if(!s.spk){s.spk=1;say(s)}
+ if(s.left>0){s.left-=dt;if(s.left<=0)s.dn=1}
+ if(s.ch&&!s.dn){if(!tour.ps)s.el+=dt;const tot=s.ch.reduce((a,c)=>a+c.length,0);let cum=0,ix=s.ch.length-1;for(let i=0;i<s.ch.length;i++){cum+=s.ch[i].length;if(cum/tot*s.D>=s.el){ix=i;break}}if(ix!=s.ci){s.ci=ix;showSub(s.ch[ix])}}
+ if(s.dn){hideSub();tour.i++}}
+function jump(dir){const t=tour;if(!t)return;t.tok++;stopSay();hideSub();const r=t.ST.filter(i=>i<=t.i).length-1;let nr=r+dir;if(dir<0&&t.i-t.ST[r]>3)nr=r;nr=clamp(nr,0,t.ST.length-1);
+ t.S.forEach(s=>{s.spk=0;s.dn=0;s.left=0});t.i=t.ST[nr];const s=t.S[t.i];tp.x=s.x;tp.z=s.z;tp.yaw=s.yaw;tp.pit=s.pit}
+function togglePause(){if(!tour)return;tour.ps=!tour.ps;$('#tr1').textContent=tour.ps?'▶':'⏸';
+ if('speechSynthesis' in window)tour.ps?speechSynthesis.pause():speechSynthesis.resume();if(curAudio)tour.ps?curAudio.pause():curAudio.play()}
+function setMode(m){mode=m;tour=null;stopSay();hideSub();
+ if(m=='top'){orb.pit=1.52;orb.yaw=0;fitOrb()}
+ if(m=='orbit'){orb.pit=.95;orb.yaw=0;fitOrb()}
+ if(m=='walk'){const n=N[selId||'in'],l=lineOf(n);ply={x:l.A[0],z:l.A[1],yaw:Math.atan2(l.B[0]-l.A[0],-(l.B[1]-l.A[1])),pit:.12};showSub('WASD أو الأسهم للحركة · اسحب للنظر · Shift للإسراع · Esc للخروج',7000)}
+ if(m=='tour'){tour=buildTour();const s=tour.S[0];tp={x:s.x,z:s.z,yaw:s.yaw,pit:s.pit};$('#tr1').textContent='⏸';
+  if(!voice&&!Object.keys(AIDX).length){$('#tr3').textContent='الصوت: غير متاح ⚠';showSub('لا يوجد صوت عربي على جهازك. اضغط «الصوت» لتشخيصه.',9000)}}
+ document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m==m));$('#tc').hidden=m!='tour'}
+function select(id){const n=N[id];if(!n)return;selId=id;room(id);if(mode=='orbit'||mode=='top'){orb.tx=n.wx;orb.tz=n.wy;orb.dist=Math.min(orb.dist,520);orb.pit=Math.max(orb.pit,mode=='top'?1.52:.8)}}
+function walk(dt){const sp=(keys.ShiftLeft||keys.ShiftRight?260:120)*dt,s=Math.sin(ply.yaw),c=Math.cos(ply.yaw);let fx=0,fz=0;
+ if(keys.KeyW||keys.ArrowUp){fx+=s;fz-=c}if(keys.KeyS||keys.ArrowDown){fx-=s;fz+=c}if(keys.KeyD||keys.ArrowRight){fx+=c;fz+=s}if(keys.KeyA||keys.ArrowLeft){fx-=c;fz-=s}
+ const l=Math.hypot(fx,fz);if(l){const[x,z]=move(ply.x,ply.z,fx/l*sp,fz/l*sp);ply.x=x;ply.z=z}}
+function drawLabels(){const L=LB.map(b=>({b,q:tc(b.p)})).filter(o=>o.q[2]>NEAR&&o.q[2]<(o.b.maxz||1e9)).sort((a,b)=>b.q[2]-a.q[2]);
+ L.forEach(({b,q})=>{const x=VW/2+q[0]/q[2]*FF,y=VH/2-q[1]/q[2]*FF;if(x<-80||x>W+80||y<-40||y>H+40)return;
+  if(b.dot){cx.beginPath();cx.arc(x,y,Math.max(2.5,b.r*FF/q[2]),0,7);cx.fillStyle=b.c;cx.fill();cx.strokeStyle='#fff';cx.lineWidth=1;cx.stroke();return}
+  let px=Math.min(b.max||34,Math.max(b.min||0,b.s*FF/q[2]));if(px<(b.min?0:6.5))return;
+  cx.font=`600 ${px}px ${FONT}`;cx.textAlign='center';const ln=b.w?wrap(b.t,b.w*FF/q[2],3):[b.t],lh=px*1.2,fc=typeof b.c=='string'?b.c:rgb(b.c);
+  ln.forEach((t,i)=>{const yy=y-(ln.length-1-i)*lh;cx.lineWidth=3;cx.strokeStyle=col.bg;cx.strokeText(t,x,yy);cx.fillStyle=fc;cx.fillText(t,x,yy)})})}
+function hud(){cx.textAlign='right';cx.fillStyle=col.tx;cx.font=`600 12px ${FONT}`;cx.fillText(`منجز ${st.done} · إعادة عمل ${st.rw} · قيد التنفيذ ${tk.length}`,W-12,20);
+ cx.fillStyle=col.mu;cx.font=`11px ${FONT}`;cx.fillText('المحاكاة توضيحية: نسب الفشل افتراضات معلنة وليست إحصاءات',W-12,36);
+ if(tour){const r=tour.ST.filter(i=>i<=tour.i).length;cx.fillText(`الغرفة ${r} من ${tour.path.length}`,W-12,52)}}
+function render(){cx.setTransform(dpr,0,0,dpr,0,0);const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,rgb(mix(colBG,colTX,.06)));g.addColorStop(1,col.bg);cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ scene();cx.direction='rtl';
+ for(let l=0;l<=4;l++)PL.filter(p=>p.l==l).sort((a,b)=>b.z-a.z).forEach(p=>{cx.beginPath();p.s.forEach((q,i)=>i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]));cx.closePath();
+  if(p.f){cx.fillStyle=p.f;cx.fill()}if(p.k){cx.strokeStyle=p.k;cx.lineWidth=p.w;cx.stroke()}});
+ drawLabels();hud()}
+function frame(t){requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000||0);last=t;if(play)simStep(dt);if(mode=='walk')walk(dt);if(mode=='tour'){try{tourStep(dt)}catch(e){console.error(e)}}
+ const d=desire(),k=1-Math.pow(1e-4,dt);cam.x+=(d.x-cam.x)*k;cam.y+=(d.y-cam.y)*k;cam.z+=(d.z-cam.z)*k;cam.yaw+=ANG(cam.yaw,d.yaw)*k;cam.pit+=(d.pit-cam.pit)*k;
+ render();if(foc)stage(1)}
+function stdTable(){selId=null;SD.innerHTML='<p><button id="bk2">لوحة القياس</button></p><h2>جدول المطابقة الدولية</h2><p class="mu">'+Object.keys(LV).map(k=>`<span class="bg" style="background:${LV[k][1]}">${LV[k][0]}</span>`).join(' ')+'</p>'+Object.values(N).map(n=>n.std?`<div class="st" style="display:block"><b>${n.ar}</b> · ${n.en}<br><span class="bg" style="background:${LV[n.std[0]][1]}">${LV[n.std[0]][0]}</span><br><span class="mu" dir="ltr" style="display:block;text-align:left">${n.std[1]} — ${n.std[2]}</span></div>`:'').join('')}
+function voiceDiag(){const vs='speechSynthesis' in window?speechSynthesis.getVoices():[],ar=vs.filter(v=>/^ar/i.test(v.lang)),n=Object.keys(AIDX).length;
+ SD.innerHTML=`<p><button id="bk3">لوحة القياس</button></p><h2>تشخيص الصوت</h2><p>أصوات المتصفح: <b>${vs.length}</b> · العربية منها: <b>${ar.length}</b> · حزمة الصوت المسجَّل: <b>${n?n+' ملفًا':'غير موجودة'}</b></p>`
+ +(ar.length||n?'':'<p><span class="bg" style="background:#ff5d73">لا يوجد صوت عربي على هذا الجهاز، ولذلك تُعرض الترجمة بلا صوت</span></p>')
+ +(vs.length?`<h3>اختر الصوت</h3><select id="vsel">${(ar.length?ar:vs).map(v=>`<option value="${v.name}"${voice&&voice.name==v.name?' selected':''}>${v.name} (${v.lang}${v.localService?'':' · يحتاج إنترنت'})</option>`).join('')}</select>`:'')
+ +`<p><button id="vt">اسمع عينة</button> <button id="vr">إعادة الكشف</button>${n?' <button id="vp">عينة من الحزمة</button>':''}</p><div id="vmsg" class="mu"></div>`
+ +`<h3>إن لم يوجد صوت عربي</h3><p class="mu">ويندوز: الإعدادات ← الوقت واللغة ← الكلام ← إدارة الأصوات ← إضافة أصوات ← العربية، ثم أعد تشغيل المتصفح. أندرويد: إعدادات تحويل النص إلى كلام (Google) ثم ثبّت بيانات اللغة العربية. ماك وآيفون: إعدادات النظام ← تسهيلات الاستخدام ← المحتوى المنطوق ← صوت النظام ← إدارة الأصوات ← العربية. وقد يعرض متصفح Edge أصواتًا عربية عصبية عبر الإنترنت.</p><h3>الحل الذي لا يعتمد على جهازك</h3><p class="mu">حزمة الصوت المسجَّل: ولّدها بأداة التسجيل (انظر tools/README_VOICE.md) وضع مجلد audio بجانب index.html؛ فيعمل الصوت في كل المتصفحات ودون إنترنت.</p>`}
+function testVoice(){const m=$('#vmsg');if(!voice){m.textContent='لا يوجد صوت عربي مختار.';return}m.textContent='جارٍ التشغيل… إن لم تسمع شيئًا فتحقق من مستوى صوت الجهاز والمتصفح.';
+ speechSynthesis.cancel();setTimeout(()=>{const u=new SpeechSynthesisUtterance('هذا اختبار للصوت العربي في مجسم رحلة المشروع');u.voice=voice;u.lang=voice.lang;window._u=u;u.onerror=e=>{m.textContent='خطأ من المتصفح: '+e.error};speechSynthesis.speak(u)},90)}
+function helpPanel(){selId=null;SD.innerHTML=`<p><button id="bk3">لوحة القياس</button></p><h2>المساعدة</h2><h3>الأوضاع</h3><p class="mu"><b>مجسّم</b>: اسحب للدوران، Shift+سحب أو الزر الأيمن للتحريك، العجلة للتقريب، انقر غرفة لفتحها. <b>مسقط علوي</b>: المخطط الهندسي. <b>تجوّل حر</b>: WASD أو الأسهم، اسحب للنظر، Shift للإسراع. <b>جولة مرشدة</b>: Space إيقاف، N التالية، P السابقة. Esc للخروج.</p><h3>العناصر</h3><p class="mu">الغرفة مرحلة عمل، والبوابة قرار قبول، والروتر يوزّع بحسب نوع الطلب، والحلقة تكرار حتى الاستيفاء. السيور الرمادية مسار العمل، والبرتقالية رجوع عند الفشل، والزرقاء المنقطة إشارات قياس. النقاط الملونة طلبات عمل: أزرق تعديل صغير، أخضر جديد، أحمر عالي الخطورة.</p><h3>للمشروع الحقيقي</h3><p class="mu">اختر نوع مشروعك لتُدمج ملحقاته، ثم «تصدير وثيقة العمل» لتأخذ المسار كاملًا مكتوبًا بخطواته ومخاطره واختباراته ومراجعه الدولية.</p>`}
+function docText(){const mp=mainPath(),L=['# وثيقة العمل','','الملحقات المفعّلة: '+([...act].map(i=>PK.find(p=>p.id==i).n).join('، ')||'لا شيء (الأساس فقط)'),'','> أسماء الغرف من معايير وأطر معروفة (لكل غرفة مصدرها ودرجتها)؛ أما ترتيبها وتفرعها فتركيب لتوضيح التسلسل المعتاد.',''];
+ const sec=(n,i)=>{const pre=E.filter(e=>e[1]==n.id&&e[3]!='s'),su=E.filter(e=>e[0]==n.id&&e[3]!='s');
+  L.push('### '+(i?i+'. ':'')+n.ar+' · '+n.en,'','- النوع: '+TN[n.t]+' ('+TNE[n.t]+')','- الوظيفة: '+n.d,'- تستقبل من: '+(pre.map(e=>N[e[0]].ar).join('، ')||'—'),'- تُرسل إلى: '+(su.map(e=>(e[2]?e[2]+' ← ':'')+N[e[1]].ar+(e[3]=='b'?' ↺':'')).join('، ')||'—'),'- يدخلها: '+(n.sub?n.sub.ia:'—'),'- يخرج منها: '+(n.sub?n.sub.oa:'—'),'- السير الداخلي (المكوّنات بالترتيب):',...(n.sub?n.sub.order.map((k,i)=>'  '+(i+1)+'. '+n.sub.nd[k].ar+' — '+n.sub.nd[k].en):n.s.map((x,k)=>'  '+(k+1)+'. '+x)),'- ما يُفسدها: '+n.f,'- اختبارها: '+TT[n.t]);
+  if(n.std)L.push('- المطابقة الدولية: '+LV[n.std[0]][0]+' — '+n.std[1]+' ('+n.std[2]+')');L.push('')};
+ L.push('## المسار الرئيسي','');mp.forEach((id,i)=>sec(N[id],i+1));
+ const rest=Object.values(N).filter(n=>!mp.includes(n.id));if(rest.length){L.push('## غرف أخرى: فروع وإرجاع وملحقات','');rest.forEach(n=>sec(n,0))}
+ if(globalThis.PLAN&&PLAN.risks&&PLAN.risks.length){L.push('## المخاطر المقترحة للمشروع','');PLAN.risks.forEach(k=>L.push('- '+k.ar+(k.mitigation?' — المعالجة: '+k.mitigation:'')))}
+ return L.join('\n')}
+function exportDoc(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([docText()],{type:'text/markdown'}));a.download='work-document.md';a.click()}
+let sbc=null;
+async function sbClient(){if(sbc)return sbc;if(!globalThis.SB)throw new Error('لم يُضبط ملف config.js');const m=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm');sbc=m.createClient(SB.url,SB.key);sbc.auth.onAuthStateChange(()=>{if(SD.querySelector('#ai-msg'))aiPanel()});return sbc}
+async function aiPanel(plan){selId=null;let mail='';try{const sb=await sbClient();const r=await sb.auth.getSession();mail=r.data.session?r.data.session.user.email:''}catch(e){}
+ let hook='';try{hook=localStorage.getItem('zh')||''}catch(e){}
+ SD.innerHTML=`<p><button id="bk3">لوحة القياس</button></p><h2>المساعد الذكي</h2><p class="mu">صِف مشروعك فيُخصَّص له خط العمل: يختار الملحقات المناسبة ويضيف غرفًا مخصصة بسيرها الداخلي. كل ما يقترحه خارج السجل المعتمد يُوسَم «اقتراح غير موثّق مرجعيًا».</p>`
+ +(mail?`<p>الحساب: <b dir="ltr">${cl(mail,80)}</b> <button id="ai-out">خروج</button></p>`:`<h3>الدخول</h3><p><input id="ai-mail" type="email" dir="ltr" placeholder="بريدك" style="width:100%"></p><p><button id="ai-in">أرسل رابط الدخول</button></p>`)
+ +`<h3>وصف المشروع</h3><p><textarea id="ai-idea" rows="5" style="width:100%" placeholder="ماذا تبني؟ لمن؟ ما القيود (وقت، فريق، ميزانية)؟"></textarea></p><p><input id="ai-dom" placeholder="المجال (اختياري)" style="width:100%"></p><p><button id="ai-gen">ولّد سير عملي</button></p><div id="ai-msg" class="mu"></div>`
+ +(plan?`<h3>الخطة المطبَّقة: ${cl(plan.title,80)}</h3><p>${cl(plan.summary,700)}</p>`+(plan.risks&&plan.risks.length?'<h3>المخاطر المقترحة</h3>'+plan.risks.map(k=>`<div class="st" style="display:block">${cl(k.ar,200)}<br><span class="mu">${cl(k.mitigation,300)}</span></div>`).join(''):''):'')
+ +`<h3>استيراد خطة JSON</h3><p><textarea id="ai-json" rows="4" dir="ltr" style="width:100%" placeholder='{"title":"...","packs":["web"],"custom_rooms":[],"risks":[]}'></textarea></p><p><button id="ai-imp">طبّق الخطة</button></p>`
+ +`<h3>إرسال وثيقة العمل إلى Zapier</h3><p><input id="ai-hook" dir="ltr" value="${cl(hook,300)}" placeholder="رابط Catch Hook" style="width:100%"></p><p><button id="ai-zap">أرسل</button></p>`}
+function applyPlan(plan){const n=planCore(plan);renderCat();fitOrb();return n}
+function importPlan(){const m=$('#ai-msg');try{const p=JSON.parse($('#ai-json').value);const n=applyPlan(p);aiPanel(globalThis.PLAN);$('#ai-msg').textContent='طُبّقت الخطة: '+n+' غرفة مخصصة.'}catch(e){m.textContent='تعذّر التطبيق: '+e.message}}
+async function genPlan(){const m=$('#ai-msg');try{const sb=await sbClient(),r=await sb.auth.getSession();if(!r.data.session){m.textContent='سجّل الدخول أولًا.';return}
+ m.textContent='جارٍ التصميم… قد يستغرق دقيقة.';const{data,error}=await sb.functions.invoke('plan-project',{body:{idea:$('#ai-idea').value,domain:$('#ai-dom').value}});
+ if(error){let msg=error.message;try{const j=await error.context.json();msg=j.message||j.error||msg}catch(_){}m.textContent='تعذّر: '+msg;return}
+ applyPlan(data.plan);aiPanel(globalThis.PLAN);$('#ai-msg').textContent='طُبّقت الخطة وحُفظت في حسابك.'}catch(e){m.textContent='تعذّر: '+e.message}}
+async function signIn(){const m=$('#ai-msg');try{const sb=await sbClient(),em=$('#ai-mail').value.trim();if(!em){return}const{error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.href.split('#')[0]}});if(m)m.textContent=error?'تعذّر: '+error.message:'أُرسل رابط الدخول إلى بريدك.'}catch(e){if(m)m.textContent='تعذّر: '+e.message}}
+async function signOut(){try{const sb=await sbClient();await sb.auth.signOut();aiPanel()}catch(e){}}
+function sendZap(){const m=$('#ai-msg'),u=($('#ai-hook').value||'').trim();if(!/^https:\/\/hooks\.zapier\.com\//.test(u)){if(m)m.textContent='الصق رابط Catch Hook من Zapier (يبدأ بـ https://hooks.zapier.com/).';return}
+ try{localStorage.setItem('zh',u)}catch(e){}fetch(u,{method:'POST',mode:'no-cors',body:new URLSearchParams({title:(globalThis.PLAN&&PLAN.title)||'وثيقة العمل',packs:[...act].join(','),document:docText()})}).then(()=>{if(m)m.textContent='أُرسلت. (تحقق من سجل الـ Zap؛ وانتبه إلى حصة مهام حسابك.)'}).catch(e=>{if(m)m.textContent='تعذّر الإرسال: '+e.message})}
+function exportLines(){const T=buildTour(),seen=new Set(),L=[];T.S.forEach(s=>{if(s.say){const id=fnv(s.say);if(!seen.has(id)){seen.add(id);L.push({id,text:s.say,prep:prep(s.say,'tts')})}}});
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(L,null,1)],{type:'application/json'}));a.download='lines.json';a.click()}
+SD.onclick=e=>{const c=e.target.closest('.ch');if(c){select(c.dataset.id);return}const id=e.target.id;
+ if(id=='eb'&&selId){setMode('walk')}else if(id=='sb'&&selId){foc=selId;$('#bk').hidden=false}else if(id=='exl')exportLines();else if(id=='stb')stdTable();else if(id=='bk2'||id=='bk3')stats();else if(id=='ai-gen')genPlan();else if(id=='ai-imp')importPlan();else if(id=='ai-in')signIn();else if(id=='ai-out')signOut();else if(id=='ai-zap')sendZap();else if(id=='exd')exportDoc();else if(id=='vt')testVoice();else if(id=='vr'){pickVoice();voiceDiag()}else if(id=='vp'){const u=Object.values(AIDX)[0];if(u)playFile(u,()=>{},()=>{$('#vmsg').textContent='تعذّر تشغيل ملف الحزمة'})}};
+SD.onchange=e=>{if(e.target.id=='vsel'){const v=speechSynthesis.getVoices().find(x=>x.name==e.target.value);if(v){voice=v;try{localStorage.setItem('vn',v.name)}catch(_){}}}};
+$('#vd').onclick=voiceDiag;$('#hp').onclick=helpPanel;$('#ai').onclick=()=>aiPanel();
+$('#bk').onclick=()=>{foc=null;$('#bk').hidden=true};
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$('#tr0').onclick=()=>jump(-1);$('#tr1').onclick=togglePause;$('#tr2').onclick=()=>jump(1);
+$('#tr3').onclick=e=>{if(!voice&&!Object.keys(AIDX).length){voiceDiag();return}soundOn=!soundOn;e.target.textContent=soundOn?'الصوت: يعمل':'الصوت: صامت';if(!soundOn)stopSay()};
+const renderCat=()=>{$('#cat').innerHTML='<span>نوع مشروعك:</span>'+PK.map(p=>`<button data-p="${p.id}"${act.has(p.id)?' class="on"':''}>${p.n}</button>`).join('')};renderCat();
+$('#cat').onclick=e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.p;act.has(id)?act.delete(id):act.add(id);b.classList.toggle('on');
+ foc=null;selId=null;$('#bk').hidden=true;build();if(mode=='tour'||mode=='walk')setMode('orbit');else fitOrb();stats()};
+$('#pl').onclick=e=>{play=!play;e.target.classList.toggle('on',play);e.target.textContent=play?'المحاكاة تعمل':'المحاكاة متوقفة'};
+const pt=new Map();let mv=0,pd=0,btn=0;
+const pdist=()=>{const a=[...pt.values()];return Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])||1};
+cv.onpointerdown=e=>{if(foc)return;cv.setPointerCapture(e.pointerId);pt.set(e.pointerId,[e.clientX,e.clientY]);mv=0;btn=e.button;if(pt.size==2)pd=pdist()};
+cv.onpointermove=e=>{if(!pt.has(e.pointerId)||foc)return;const o=pt.get(e.pointerId),dx=e.clientX-o[0],dy=e.clientY-o[1];pt.set(e.pointerId,[e.clientX,e.clientY]);mv+=Math.abs(dx)+Math.abs(dy);
+ if(mode=='tour')return;if(mode=='walk'){ply.yaw+=dx*.005;ply.pit=clamp(ply.pit+dy*.004,-1.2,1.2);return}
+ if(pt.size==2){const d=pdist();orb.dist=clamp(orb.dist*pd/d,150,6000);pd=d;return}
+ if(mode=='top'||e.shiftKey||btn==2){const u=orb.dist/H*1.1,s=Math.sin(orb.yaw),c=Math.cos(orb.yaw);orb.tx+=-c*dx*u+s*dy*u;orb.tz+=-s*dx*u-c*dy*u}
+ else{orb.yaw+=dx*.006;orb.pit=clamp(orb.pit+dy*.005,.15,1.55)}};
+cv.onpointerup=e=>{if(!foc&&pt.size==1&&mv<6&&(mode=='orbit'||mode=='top')){const r=cv.getBoundingClientRect(),id=pickAt(e.clientX-r.left,e.clientY-r.top);if(id)select(id)}pt.delete(e.pointerId)};
+cv.onpointercancel=e=>pt.delete(e.pointerId);cv.oncontextmenu=e=>e.preventDefault();
+cv.onwheel=e=>{e.preventDefault();if(mode=='orbit'||mode=='top')orb.dist=clamp(orb.dist*Math.exp(e.deltaY*.001),150,6000)};
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='Escape'){if(foc){foc=null;$('#bk').hidden=true}else if(mode!='orbit')setMode('orbit')}
+ if(mode=='tour'){if(e.code=='Space'){e.preventDefault();togglePause()}if(e.code=='KeyN')jump(1);if(e.code=='KeyP')jump(-1)}
+ if(mode=='walk'&&e.code.startsWith('Arrow'))e.preventDefault()});
+addEventListener('keyup',e=>{delete keys[e.code]});
+let dp=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('#ins').hidden=false});
+$('#ins').onclick=()=>{if(dp)dp.prompt()};
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+fetch('audio/index.json').then(r=>r.ok?r.json():{}).then(j=>{AIDX=j}).catch(()=>{});
+matchMedia('(prefers-color-scheme:light)').addEventListener('change',theme);
+new ResizeObserver(()=>{resize();if(mode=='orbit'||mode=='top')fitOrb()}).observe($('#w'));
+resize();theme();build();fitOrb();Object.assign(cam,desire());stats();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
